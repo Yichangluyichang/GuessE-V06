@@ -121,13 +121,13 @@ class FirebaseSyncManager {
                 throw new Error('Firebase 未初始化');
             }
 
-            if (!this.isAdminLoggedIn()) {
-                throw new Error('需要管理员权限');
-            }
+            // 移除管理员权限检查，因为游戏已经有密码保护
+            // if (!this.isAdminLoggedIn()) {
+            //     throw new Error('需要管理员权限');
+            // }
 
-            // 使用皇帝名字作为唯一标识
-            const emperorId = this.generateEmperorId(emperor.name, emperor.dynasty);
-            await this.database.ref(`emperors/${emperorId}`).set(emperor);
+            // 使用皇帝 ID 作为键
+            await this.database.ref(`emperors/${emperor.id}`).set(emperor);
 
             console.log('皇帝数据已保存到云端:', emperor.name);
             return { success: true };
@@ -147,15 +147,15 @@ class FirebaseSyncManager {
                 throw new Error('Firebase 未初始化');
             }
 
-            if (!this.isAdminLoggedIn()) {
-                throw new Error('需要管理员权限');
-            }
+            // 移除管理员权限检查
+            // if (!this.isAdminLoggedIn()) {
+            //     throw new Error('需要管理员权限');
+            // }
 
             // 构建批量更新对象
             const updates = {};
             emperors.forEach(emperor => {
-                const emperorId = this.generateEmperorId(emperor.name, emperor.dynasty);
-                updates[`emperors/${emperorId}`] = emperor;
+                updates[`emperors/${emperor.id}`] = emperor;
             });
 
             await this.database.ref().update(updates);
@@ -179,9 +179,10 @@ class FirebaseSyncManager {
                 throw new Error('Firebase 未初始化');
             }
 
-            if (!this.isAdminLoggedIn()) {
-                throw new Error('需要管理员权限');
-            }
+            // 移除管理员权限检查
+            // if (!this.isAdminLoggedIn()) {
+            //     throw new Error('需要管理员权限');
+            // }
 
             const emperorId = this.generateEmperorId(name, dynasty);
             await this.database.ref(`emperors/${emperorId}`).remove();
@@ -244,4 +245,6 @@ if (typeof window !== 'undefined') {
         console.error('Firebase 同步管理器自动初始化失败:', error);
     });
 }
+
+
 
