@@ -645,7 +645,7 @@ class EmperorDatabase {
             
             // 从云端删除
             if (window.FirebaseSyncManager) {
-                await window.FirebaseSyncManager.deleteEmperorFromCloud(emperorId);
+                await window.FirebaseSyncManager.deleteEmperorFromCloud(emperor.name, emperor.dynasty);
             }
             
             console.log(`成功删除皇帝: ${emperorName} (${emperorId})`);
