@@ -235,7 +235,13 @@ class FirebaseSyncManager {
     }
 }
 
-// 导出到全局作用域
+// 创建全局实例
 if (typeof window !== 'undefined') {
-    window.FirebaseSyncManager = FirebaseSyncManager;
+    window.FirebaseSyncManager = new FirebaseSyncManager();
+    
+    // 自动初始化
+    window.FirebaseSyncManager.initialize().catch(error => {
+        console.error('Firebase 同步管理器自动初始化失败:', error);
+    });
 }
+
