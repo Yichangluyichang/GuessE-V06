@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国皇帝猜谜游戏</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>中国皇帝猜谜游戏</h1>
+            <div id="score-display">
+                <span>当前轮次分数: <span id="current-score">100</span></span>
+                <span>总分: <span id="total-score">0</span></span>
+            </div>
+        </header>
+
+        <main id="game-container">
+            <div id="start-screen" class="screen active">
+                <h2>欢迎来到中国皇帝猜谜游戏</h2>
+                <p>通过提示词猜测中国历史上的皇帝，越早猜对分数越高！</p>
+                <button id="start-game-btn" class="primary-btn">开始游戏</button>
+                <button id="admin-btn" class="secondary-btn">管理皇帝数据 🔒</button>
+            </div>
+
+            <div id="game-screen" class="screen">
+                <div id="hint-container">
+                    <div id="hint-number">提示 <span id="current-hint-num">1</span>/10</div>
+                    <div id="hint-text"></div>
+                    <div id="difficulty-indicator">
+                        <span class="difficulty-label">难度: </span>
+                        <span id="difficulty-level">困难</span>
+                    </div>
+                    <div id="hint-history-controls">
+                        <button id="show-hint-history-btn" class="secondary-btn" style="display: none;">查看历史提示</button>
+                        <button id="return-to-menu-game-btn" class="return-to-menu-btn secondary-btn">返回主菜单</button>
+                    </div>
+                </div>
+
+                <div id="input-container">
+                    <input type="text" id="guess-input" placeholder="请输入皇帝的谥号、庙号、年号或名字..." maxlength="20">
+                    <button id="submit-guess-btn" class="primary-btn">提交答案</button>
+                </div>
+
+                <div id="wrong-guesses">
+                    <h4>错误猜测:</h4>
+                    <div id="wrong-list"></div>
+                </div>
+            </div>
+
+            <div id="result-screen" class="screen">
+                <div id="result-content">
+                    <h2 id="result-title"></h2>
+                    <div id="emperor-info">
+                        <h3 id="result-emperor-name"></h3>
+                        <div id="emperor-details"></div>
+                    </div>
+                    <div id="score-info">
+                        <p>本轮得分: <span id="round-score">0</span></p>
+                        <p>累计总分: <span id="final-total-score">0</span></p>
+                    </div>
+                    <div id="result-actions">
+                        <button id="next-round-btn" class="primary-btn">下一轮</button>
+                        <button id="restart-game-btn" class="secondary-btn">重新开始</button>
+                        <button id="return-to-menu-result-btn" class="return-to-menu-btn secondary-btn">返回主菜单</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hint-history-screen" class="screen">
+                <div id="hint-history-content">
+                    <h2>提示词历史记录</h2>
+                    <div id="hint-history-navigation">
+                        <button id="history-prev-btn" class="nav-btn" title="上一个提示">‹</button>
+                        <span id="current-history-index">1 / 1</span>
+                        <button id="history-next-btn" class="nav-btn" title="下一个提示">›</button>
+                    </div>
+                    <div id="hint-history-list">
+                        <!-- 动态生成的历史提示词列表 -->
+                    </div>
+                    <div id="hint-history-actions">
+                        <button id="hide-hint-history-btn" class="primary-btn">返回游戏</button>
+                        <button id="return-to-menu-history-btn" class="return-to-menu-btn secondary-btn">返回主菜单</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="admin-screen" class="screen">
+                <div id="admin-content">
+                    <h2>皇帝数据管理</h2>
+                    
+                    <div id="admin-tabs">
+                        <button id="add-emperor-tab" class="tab-btn">添加皇帝</button>
+                        <button id="view-emperors-tab" class="tab-btn active">查看皇帝</button>
+                    </div>
+
+                    <div id="add-emperor-panel" class="admin-panel">
+                        <form id="emperor-form">
+                            <div class="form-section">
+                                <h3>基本信息</h3>
+                                <div class="form-group">
+                                    <label for="emperor-id">皇帝ID *</label>
+                                    <input type="text" id="emperor-id" required placeholder="例: tang-taizong">
+                                    <small>唯一标识符，建议使用朝代-称号格式</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="emperor-name">名字 *</label>
+                                    <input type="text" id="emperor-name" required placeholder="例: 李世民">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="emperor-temple-name">庙号 *</label>
+                                    <input type="text" id="emperor-temple-name" required placeholder="例: 太宗">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="emperor-posthumous-name">谥号 *</label>
+                                    <input type="text" id="emperor-posthumous-name" required placeholder="例: 文武大圣大广孝皇帝">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="emperor-reign-names">年号 *</label>
+                                    <input type="text" id="emperor-reign-names" required placeholder="多个年号用逗号分隔，例: 贞观">
+                                    <small>多个年号请用逗号分隔</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="emperor-dynasty">朝代 *</label>
+                                    <select id="emperor-dynasty" required>
+                                        <option value="">请选择朝代</option>
+                                        <option value="秦朝">秦朝</option>
+                                        <option value="西汉">西汉</option>
+                                        <option value="东汉">东汉</option>
+                                        <option value="三国">三国</option>
+                                        <option value="西晋">西晋</option>
+                                        <option value="东晋">东晋</option>
+                                        <option value="南北朝">南北朝</option>
+                                        <option value="隋朝">隋朝</option>
+                                        <option value="唐朝">唐朝</option>
+                                        <option value="五代十国">五代十国</option>
+                                        <option value="北宋">北宋</option>
+                                        <option value="南宋">南宋</option>
+                                        <option value="元朝">元朝</option>
+                                        <option value="明朝">明朝</option>
+                                        <option value="清朝">清朝</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="emperor-reign-start">在位开始年份 *</label>
+                                    <input type="number" id="emperor-reign-start" required placeholder="例: 626">
+                                    <small>公元年份，公元前请使用负数，例: -221</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="emperor-reign-end">在位结束年份 *</label>
+                                    <input type="number" id="emperor-reign-end" required placeholder="例: 649">
+                                    <small>公元年份，公元前请使用负数，例: -210</small>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3>提示词管理</h3>
+                                
+                                <!-- 提示词统计显示 -->
+                                <div id="hints-counter" class="hints-counter">
+                                    <div class="counter-item">
+                                        <span class="counter-label">困难:</span>
+                                        <span id="hard-count" class="counter-value">0</span>
+                                        <span class="counter-requirement">(需要≥3)</span>
+                                    </div>
+                                    <div class="counter-item">
+                                        <span class="counter-label">中等:</span>
+                                        <span id="medium-count" class="counter-value">0</span>
+                                        <span class="counter-requirement">(需要≥3)</span>
+                                    </div>
+                                    <div class="counter-item">
+                                        <span class="counter-label">简单:</span>
+                                        <span id="easy-count" class="counter-value">0</span>
+                                        <span class="counter-requirement">(需要≥4)</span>
+                                    </div>
+                                    <div class="counter-item">
+                                        <span class="counter-label">总计:</span>
+                                        <span id="total-count" class="counter-value">0</span>
+                                        <span class="counter-requirement">(需要≥10)</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- 动态提示词容器 -->
+                                <div id="hints-container">
+                                    <!-- 困难提示词组 -->
+                                    <div class="hints-group" data-difficulty="hard">
+                                        <div class="hints-group-header">
+                                            <h4>困难提示词</h4>
+                                            <button type="button" class="add-hint-btn" data-difficulty="hard">
+                                                <span class="btn-icon">+</span>
+                                                添加困难提示词
+                                            </button>
+                                        </div>
+                                        <div class="hints-list" id="hard-hints-list">
+                                            <!-- 动态生成的困难提示词输入框 -->
+                                        </div>
+                                    </div>
+
+                                    <!-- 中等提示词组 -->
+                                    <div class="hints-group" data-difficulty="medium">
+                                        <div class="hints-group-header">
+                                            <h4>中等提示词</h4>
+                                            <button type="button" class="add-hint-btn" data-difficulty="medium">
+                                                <span class="btn-icon">+</span>
+                                                添加中等提示词
+                                            </button>
+                                        </div>
+                                        <div class="hints-list" id="medium-hints-list">
+                                            <!-- 动态生成的中等提示词输入框 -->
+                                        </div>
+                                    </div>
+
+                                    <!-- 简单提示词组 -->
+                                    <div class="hints-group" data-difficulty="easy">
+                                        <div class="hints-group-header">
+                                            <h4>简单提示词</h4>
+                                            <button type="button" class="add-hint-btn" data-difficulty="easy">
+                                                <span class="btn-icon">+</span>
+                                                添加简单提示词
+                                            </button>
+                                        </div>
+                                        <div class="hints-list" id="easy-hints-list">
+                                            <!-- 动态生成的简单提示词输入框 -->
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 快速添加按钮 -->
+                                <div class="hints-quick-actions">
+                                    <button type="button" id="add-minimum-hints-btn" class="secondary-btn">
+                                        添加最低要求提示词 (3+3+4)
+                                    </button>
+                                    <button type="button" id="clear-all-hints-btn" class="secondary-btn">
+                                        清空所有提示词
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="primary-btn">添加皇帝</button>
+                                <button type="button" id="clear-form-btn" class="secondary-btn">清空表单</button>
+                                <button type="button" id="back-to-game-btn" class="secondary-btn">返回游戏</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="view-emperors-panel" class="admin-panel active">
+                        <div id="emperors-list">
+                            <div id="emperors-stats"></div>
+                            
+                            <!-- 搜索和过滤控件 -->
+                            <div id="emperors-controls">
+                                <div class="search-container">
+                                    <input type="text" id="emperor-search" placeholder="搜索皇帝（名字、庙号、谥号、年号、ID）..." />
+                                    <button type="button" id="clear-search-btn" class="clear-btn" title="清空搜索">×</button>
+                                </div>
+                                <div class="filter-container">
+                                    <select id="dynasty-filter">
+                                        <option value="all">所有朝代</option>
+                                        <option value="秦朝">秦朝</option>
+                                        <option value="西汉">西汉</option>
+                                        <option value="东汉">东汉</option>
+                                        <option value="三国">三国</option>
+                                        <option value="西晋">西晋</option>
+                                        <option value="东晋">东晋</option>
+                                        <option value="南北朝">南北朝</option>
+                                        <option value="隋朝">隋朝</option>
+                                        <option value="唐朝">唐朝</option>
+                                        <option value="五代十国">五代十国</option>
+                                        <option value="北宋">北宋</option>
+                                        <option value="南宋">南宋</option>
+                                        <option value="元朝">元朝</option>
+                                        <option value="明朝">明朝</option>
+                                        <option value="清朝">清朝</option>
+                                    </select>
+                                    <select id="status-filter">
+                                        <option value="all">所有状态</option>
+                                        <option value="valid">仅有效</option>
+                                        <option value="invalid">仅无效</option>
+                                    </select>
+                                    <select id="page-size-select">
+                                        <option value="10">每页10条</option>
+                                        <option value="20">每页20条</option>
+                                        <option value="50">每页50条</option>
+                                        <option value="all">显示全部</option>
+                                    </select>
+                                </div>
+                                <div class="sort-container">
+                                    <select id="sort-field">
+                                        <option value="name">按姓名排序</option>
+                                        <option value="dynasty">按朝代排序</option>
+                                        <option value="reignStart" selected>按在位时间排序</option>
+                                        <option value="hintCount">按提示词数量排序</option>
+                                    </select>
+                                    <select id="sort-order">
+                                        <option value="asc">升序</option>
+                                        <option value="desc">降序</option>
+                                    </select>
+                                    <button type="button" id="reset-filters-btn" class="secondary-btn">重置筛选</button>
+                                </div>
+                            </div>
+                            
+                            <div id="emperors-table-container">
+                                <table id="emperors-table">
+                                    <thead>
+                                        <tr>
+                                            <th>名字</th>
+                                            <th>朝代</th>
+                                            <th>庙号</th>
+                                            <th>提示词数量</th>
+                                            <th>状态</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="emperors-table-body">
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- 翻页控件 -->
+                            <div id="pagination-container">
+                                <div class="pagination-info">
+                                    <span id="pagination-info-text">显示第 1-10 条，共 0 条记录</span>
+                                </div>
+                                <div class="pagination-controls">
+                                    <button type="button" id="first-page-btn" class="pagination-btn" title="首页">«</button>
+                                    <button type="button" id="prev-page-btn" class="pagination-btn" title="上一页">‹</button>
+                                    <div id="page-numbers"></div>
+                                    <button type="button" id="next-page-btn" class="pagination-btn" title="下一页">›</button>
+                                    <button type="button" id="last-page-btn" class="pagination-btn" title="末页">»</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" id="refresh-list-btn" class="primary-btn">刷新列表</button>
+                            <button type="button" id="back-to-game-from-list-btn" class="secondary-btn">返回游戏</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 管理密码验证模态框 -->
+        <div id="admin-password-modal" class="modal-overlay" style="display: none;">
+            <div class="admin-password-modal">
+                <div class="modal-header">
+                    <h3>🔒 管理员验证</h3>
+                </div>
+                <div class="modal-body">
+                    <p>请输入管理员密码以访问皇帝数据管理功能：</p>
+                    <div class="password-input-container">
+                        <input type="password" id="admin-password-input" placeholder="请输入密码" maxlength="20">
+                        <button type="button" id="toggle-password-visibility" class="password-toggle-btn" title="显示/隐藏密码">👁️</button>
+                    </div>
+                    <div id="password-error-message" class="error-message" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="admin-password-cancel-btn" class="secondary-btn">取消</button>
+                    <button id="admin-password-confirm-btn" class="primary-btn">确认</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>学习中国历史，了解皇帝文化</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript 模块 -->
+    <script src="js/types.js"></script>
+    <script src="js/validation.js"></script>
+    <script src="js/default-emperors-data.js"></script>
+    <script src="js/emperor-database.js"></script>
+    <script src="js/score-manager.js"></script>
+    <script src="js/game-state-manager.js"></script>
+    <script src="js/hint-history-manager.js"></script>
+    <script src="js/menu-navigation-manager.js"></script>
+    <script src="js/game-controller.js"></script>
+    <script src="js/ui-renderer.js"></script>
+    <script src="js/admin-manager.js"></script>
+    <script src="js/admin-auth-manager.js"></script>
+    <script src="js/error-handler.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

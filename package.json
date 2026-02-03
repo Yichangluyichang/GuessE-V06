@@ -1,0 +1,17 @@
+{
+  "name": "chinese-emperor-guessing-game",
+  "version": "1.0.0",
+  "description": "中国皇帝猜谜游戏",
+  "main": "index.html",
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0",
+    "fast-check": "^3.15.0",
+    "jsdom": "^23.0.0"
+  },
+  "type": "module"
+}
