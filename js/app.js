@@ -37,6 +37,9 @@ class ChineseEmperorGame {
         try {
             console.log('初始化中国皇帝猜谜游戏...');
             
+            // 显示加载提示
+            this.showLoadingOverlay('正在初始化游戏...');
+            
             // 首先初始化错误处理器
             this.errorHandler = new window.ErrorHandler();
             const errorHandlerInitialized = this.errorHandler.init();
@@ -45,14 +48,21 @@ class ChineseEmperorGame {
                 console.warn('错误处理器初始化失败，继续使用基础错误处理');
             }
             
+            // 更新加载提示
+            this.updateLoadingMessage('正在加载皇帝数据...');
+            
             // 初始化游戏控制器
             this.gameController = new window.GameController();
             const controllerInitialized = await this.gameController.init();
             
             if (!controllerInitialized) {
                 this.handleInitializationError('游戏控制器初始化失败');
+                this.hideLoadingOverlay();
                 return false;
             }
+            
+            // 更新加载提示
+            this.updateLoadingMessage('正在初始化界面...');
             
             // 初始化UI渲染器
             this.uiRenderer = new window.UIRenderer();
@@ -69,6 +79,7 @@ class ChineseEmperorGame {
             
             if (!uiInitialized) {
                 this.handleInitializationError('UI渲染器初始化失败');
+                this.hideLoadingOverlay();
                 return false;
             }
             
@@ -126,12 +137,60 @@ class ChineseEmperorGame {
             
             this.isInitialized = true;
             console.log('游戏初始化完成');
+            
+            // 隐藏加载提示
+            this.hideLoadingOverlay();
+            
             return true;
             
         } catch (error) {
             console.error('游戏初始化失败:', error);
             this.handleInitializationError('游戏初始化失败: ' + error.message);
+            this.hideLoadingOverlay();
             return false;
+        }
+    }
+    
+    /**
+     * 显示加载提示层
+     * @param {string} message - 加载消息
+     */
+    showLoadingOverlay(message = '正在加载...') {
+        const overlay = document.getElementById('loading-overlay');
+        const messageEl = document.getElementById('loading-message');
+        
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            overlay.style.display = 'flex';
+        }
+        
+        if (messageEl && message) {
+            messageEl.textContent = message;
+        }
+    }
+    
+    /**
+     * 更新加载提示消息
+     * @param {string} message - 新的加载消息
+     */
+    updateLoadingMessage(message) {
+        const messageEl = document.getElementById('loading-message');
+        if (messageEl) {
+            messageEl.textContent = message;
+        }
+    }
+    
+    /**
+     * 隐藏加载提示层
+     */
+    hideLoadingOverlay() {
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) {
+            overlay.classList.add('hidden');
+            // 延迟移除display属性，等待淡出动画完成
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 500);
         }
     }
     

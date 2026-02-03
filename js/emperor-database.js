@@ -69,11 +69,22 @@ class EmperorDatabase {
             }
             
             console.log('正在从云端加载皇帝数据...');
+            
+            // 更新加载提示（如果应用实例存在）
+            if (window.game && window.game.updateLoadingMessage) {
+                window.game.updateLoadingMessage('正在连接云端数据库...');
+            }
+            
             const cloudEmperors = await window.FirebaseSyncManager.loadEmperorsFromCloud();
             
             if (!cloudEmperors || cloudEmperors.length === 0) {
                 console.log('云端没有数据');
                 return false;
+            }
+            
+            // 更新加载提示
+            if (window.game && window.game.updateLoadingMessage) {
+                window.game.updateLoadingMessage(`正在验证 ${cloudEmperors.length} 位皇帝数据...`);
             }
             
             // 验证数据完整性
@@ -86,6 +97,12 @@ class EmperorDatabase {
             
             this.emperors = cloudEmperors;
             console.log(`从云端加载了 ${this.emperors.length} 位皇帝数据`);
+            
+            // 更新加载提示
+            if (window.game && window.game.updateLoadingMessage) {
+                window.game.updateLoadingMessage('数据加载完成！');
+            }
+            
             return true;
             
         } catch (error) {
