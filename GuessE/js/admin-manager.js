@@ -445,9 +445,9 @@ class AdminManager {
         }
         
         // 验证在位时间逻辑
-        if (formData.reignStart >= formData.reignEnd) {
-            console.error('在位时间逻辑错误:', formData.reignStart, '>=', formData.reignEnd);
-            throw new Error('在位结束年份必须大于开始年份');
+        if (formData.reignStart > formData.reignEnd) {
+            console.error('在位时间逻辑错误:', formData.reignStart, '>', formData.reignEnd);
+            throw new Error('在位结束年份必须大于或等于开始年份');
         }
         
         // 收集提示词
