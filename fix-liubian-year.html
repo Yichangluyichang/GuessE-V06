@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修复刘辩在位年份</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+        .emperor-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .emperor-info p {
+            margin: 8px 0;
+        }
+        .emperor-info strong {
+            color: #495057;
+        }
+    </style>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 修复刘辩在位年份工具</h1>
+        <p>这个工具可以直接修改刘辩的在位结束年份为189年（与开始年份相同）</p>
+        
+        <div id="emperor-info" class="emperor-info" style="display: none;">
+            <h3>当前数据：</h3>
+            <p><strong>皇帝ID：</strong><span id="current-id"></span></p>
+            <p><strong>名字：</strong><span id="current-name"></span></p>
+            <p><strong>在位开始：</strong><span id="current-start"></span></p>
+            <p><strong>在位结束：</strong><span id="current-end"></span></p>
+        </div>
+        
+        <button id="load-btn" onclick="loadEmperor()">1. 加载刘辩数据</button>
+        <button id="fix-btn" onclick="fixYear()" disabled>2. 修改结束年份为189</button>
+        
+        <div id="status" class="status"></div>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script>
+        let emperorData = null;
+        let database = null;
+
+        // 初始化Firebase
+        function initFirebase() {
+            try {
+                const success = initializeFirebase();
+                if (!success) {
+                    throw new Error('Firebase初始化失败');
+                }
+                database = window.getFirebaseDatabase();
+                showStatus('Firebase初始化成功', 'success');
+                return true;
+            } catch (error) {
+                showStatus('Firebase初始化失败: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // 加载刘辩数据
+        async function loadEmperor() {
+            showStatus('正在加载刘辩数据...', 'info');
+            
+            if (!database) {
+                if (!initFirebase()) {
+                    return;
+                }
+            }
+
+            try {
+                // 刘辩的ID是 东汉_刘辩
+                const snapshot = await database.ref('emperors/东汉_刘辩').once('value');
+                emperorData = snapshot.val();
+
+                if (!emperorData) {
+                    showStatus('未找到刘辩的数据', 'error');
+                    return;
+                }
+
+                // 显示当前数据
+                document.getElementById('current-id').textContent = emperorData.id;
+                document.getElementById('current-name').textContent = emperorData.name;
+                document.getElementById('current-start').textContent = emperorData.reignStart;
+                document.getElementById('current-end').textContent = emperorData.reignEnd;
+                document.getElementById('emperor-info').style.display = 'block';
+
+                // 启用修复按钮
+                document.getElementById('fix-btn').disabled = false;
+                
+                showStatus('成功加载刘辩数据！当前在位时间：' + emperorData.reignStart + '-' + emperorData.reignEnd, 'success');
+            } catch (error) {
+                showStatus('加载失败: ' + error.message, 'error');
+            }
+        }
+
+        // 修复年份
+        async function fixYear() {
+            if (!emperorData) {
+                showStatus('请先加载数据', 'error');
+                return;
+            }
+
+            showStatus('正在修改年份...', 'info');
+
+            try {
+                // 修改结束年份为189
+                emperorData.reignEnd = 189;
+
+                // 保存到Firebase
+                await database.ref('emperors/东汉_刘辩').set(emperorData);
+
+                // 更新显示
+                document.getElementById('current-end').textContent = emperorData.reignEnd;
+
+                showStatus('✅ 成功！刘辩的在位结束年份已修改为189年', 'success');
+                
+                // 禁用按钮防止重复点击
+                document.getElementById('fix-btn').disabled = true;
+            } catch (error) {
+                showStatus('修改失败: ' + error.message, 'error');
+            }
+        }
+
+        // 显示状态消息
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+        }
+
+        // 页面加载时初始化Firebase
+        window.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+        });
+    </script>
+</body>
+</html>
