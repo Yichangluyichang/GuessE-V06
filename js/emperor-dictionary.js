@@ -344,7 +344,10 @@ const EmperorDictionary = {
             { name: '咸丰', dynasty: '清朝' },
             { name: '同治', dynasty: '清朝' },
             { name: '光绪', dynasty: '清朝' },
-            { name: '溥仪', dynasty: '清朝' }
+            { name: '溥仪', dynasty: '清朝' },
+
+            // 其他
+            { name: '王莽', dynasty: '其他' }
         ];
     },
 
