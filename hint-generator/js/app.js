@@ -300,6 +300,7 @@ class App {
         try {
             // 添加到当前皇帝的提示词列表
             const newHint = {
+                id: `${this.currentEmperor.id}-hint-${this.currentEmperor.hints.length}`,
                 content: content,
                 difficulty: difficulty,
                 order: this.currentEmperor.hints.length

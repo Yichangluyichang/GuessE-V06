@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修复缺失的 Hint ID</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #log {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>修复缺失的 Hint ID</h1>
+    <p>此工具会扫描所有皇帝数据，为缺失 id 字段的 hints 自动添加 id。</p>
+    
+    <button id="fix-btn">开始修复</button>
+    
+    <div id="status"></div>
+    <div id="log"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Firebase 配置 -->
+    <script src="js/firebase-config.js"></script>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const logDiv = document.getElementById('log');
+        const fixBtn = document.getElementById('fix-btn');
+
+        function showStatus(message, type = 'info') {
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function fixMissingHintIds() {
+            try {
+                fixBtn.disabled = true;
+                showStatus('正在初始化 Firebase...', 'info');
+                log('开始修复流程...');
+
+                // 初始化 Firebase
+                if (!initializeFirebase()) {
+                    throw new Error('Firebase 初始化失败');
+                }
+
+                const db = window.getFirebaseDatabase();
+                const emperorsRef = db.ref('emperors');
+
+                showStatus('正在加载皇帝数据...', 'info');
+                log('从 Firebase 加载数据...');
+
+                const snapshot = await emperorsRef.once('value');
+                const data = snapshot.val();
+
+                if (!data) {
+                    throw new Error('没有找到皇帝数据');
+                }
+
+                const emperorIds = Object.keys(data);
+                log(`找到 ${emperorIds.length} 个皇帝`);
+
+                let fixedCount = 0;
+                let totalHintsFixed = 0;
+
+                for (const emperorId of emperorIds) {
+                    const emperor = data[emperorId];
+                    
+                    if (!emperor.hints || !Array.isArray(emperor.hints)) {
+                        log(`跳过 ${emperorId}: 没有 hints 数组`);
+                        continue;
+                    }
+
+                    let needsFix = false;
+                    const fixedHints = emperor.hints.map((hint, index) => {
+                        if (!hint.id) {
+                            needsFix = true;
+                            totalHintsFixed++;
+                            return {
+                                ...hint,
+                                id: `${emperorId}-hint-${index}`
+                            };
+                        }
+                        return hint;
+                    });
+
+                    if (needsFix) {
+                        log(`修复 ${emperorId}: ${emperor.name} (${emperor.hints.length} 个 hints)`);
+                        await emperorsRef.child(emperorId).child('hints').set(fixedHints);
+                        fixedCount++;
+                    }
+                }
+
+                log(`修复完成！`);
+                log(`修复了 ${fixedCount} 个皇帝`);
+                log(`总共修复了 ${totalHintsFixed} 个 hints`);
+                showStatus(`修复成功！修复了 ${fixedCount} 个皇帝，${totalHintsFixed} 个 hints`, 'success');
+
+            } catch (error) {
+                console.error('修复失败:', error);
+                log(`错误: ${error.message}`);
+                showStatus('修复失败: ' + error.message, 'error');
+            } finally {
+                fixBtn.disabled = false;
+            }
+        }
+
+        fixBtn.addEventListener('click', fixMissingHintIds);
+    </script>
+</body>
+</html>

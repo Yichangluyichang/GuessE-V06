@@ -157,7 +157,18 @@ class FirebaseManager {
         }
 
         try {
-            await this.emperorsRef.child(emperorId).child('hints').set(hints);
+            // 确保每个 hint 都有 id 字段
+            const hintsWithIds = hints.map((hint, index) => {
+                if (!hint.id) {
+                    return {
+                        ...hint,
+                        id: `${emperorId}-hint-${index}`
+                    };
+                }
+                return hint;
+            });
+
+            await this.emperorsRef.child(emperorId).child('hints').set(hintsWithIds);
             console.log('提示词更新成功:', emperorId);
             return true;
         } catch (error) {
