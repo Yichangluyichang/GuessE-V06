@@ -80,7 +80,6 @@
 
         // 初始化 Firebase
         let firebaseApp = null;
-        let firebaseAuth = null;
         let firebaseDatabase = null;
 
         /**
@@ -101,8 +100,7 @@
                     firebaseApp = firebase.app();
                 }
 
-                // 初始化服务
-                firebaseAuth = firebase.auth();
+                // 只初始化 database 服务
                 firebaseDatabase = firebase.database();
 
                 console.log('Firebase 初始化成功');
@@ -116,7 +114,6 @@
         // 导出到全局作用域
         window.firebaseConfig = firebaseConfig;
         window.initializeFirebase = initializeFirebase;
-        window.getFirebaseAuth = () => firebaseAuth;
         window.getFirebaseDatabase = () => firebaseDatabase;
     </script>
 
