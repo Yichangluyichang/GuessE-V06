@@ -321,11 +321,33 @@ class UIManager {
             }
 
             if (evaluation.corrected) {
-                html += `<div class="suggestion"><strong>修正建议：</strong>${evaluation.corrected}</div>`;
+                html += `
+                    <div class="suggestion">
+                        <strong>修正建议：</strong>
+                        <textarea 
+                            class="corrected-hint-input" 
+                            data-index="${evaluation.index}"
+                            rows="3"
+                            style="width: 100%; margin-top: 8px; padding: 8px; border: 2px solid #667eea; border-radius: 5px; font-size: 0.95rem;"
+                        >${evaluation.corrected}</textarea>
+                    </div>
+                `;
             }
 
             itemDiv.innerHTML = html;
             container.appendChild(itemDiv);
+        });
+
+        // 绑定修正建议输入框的事件
+        const correctedInputs = container.querySelectorAll('.corrected-hint-input');
+        correctedInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                const evaluation = evaluations[index];
+                if (evaluation) {
+                    evaluation.corrected = e.target.value;
+                }
+            });
         });
     }
 
