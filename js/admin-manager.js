@@ -321,12 +321,35 @@ class AdminManager {
             
             if (this.isEditMode) {
                 console.log('执行编辑模式更新...');
-                // 编辑模式：更新现有皇帝
-                success = await this.database.updateEmperor(emperorData);
+                console.log(`原始ID: ${this.editingEmperorId}, 新ID: ${emperorData.id}`);
+                
+                // 检查ID是否被修改
+                const idChanged = this.editingEmperorId !== emperorData.id;
+                
+                if (idChanged) {
+                    console.log('ID已修改，需要删除旧记录并添加新记录');
+                    
+                    // 先删除旧记录
+                    const deleteSuccess = await this.database.deleteEmperor(this.editingEmperorId);
+                    if (!deleteSuccess) {
+                        throw new Error('删除旧记录失败');
+                    }
+                    console.log('旧记录已删除');
+                    
+                    // 添加新记录
+                    success = await this.database.addEmperor(emperorData);
+                    if (!success) {
+                        throw new Error('添加新记录失败');
+                    }
+                    console.log('新记录已添加');
+                } else {
+                    // ID未修改，直接更新
+                    success = await this.database.updateEmperor(emperorData);
+                }
                 
                 if (success) {
                     console.log('皇帝更新成功');
-                    this.showMessage(`成功更新皇帝: ${emperorData.name}`, 'success');
+                    this.showMessage(`成功更新皇帝: ${emperorData.name}${idChanged ? ' (ID已修改)' : ''}`, 'success');
                     
                     // 编辑模式下不清空表单，保持当前数据
                     // 只重置编辑状态
@@ -543,12 +566,12 @@ class AdminManager {
             isValid = false;
         }
         
-        // 验证ID格式
+        // 验证ID格式（允许中文、字母、数字和连字符）
         const idField = document.getElementById('emperor-id');
-        const idPattern = /^[a-z0-9\-]+$/;
+        const idPattern = /^[\u4e00-\u9fa5a-zA-Z0-9\-]+$/;
         if (idField && idField.value && !idPattern.test(idField.value)) {
             console.log('ID格式验证失败:', idField.value);
-            this.setFieldError(idField, 'ID只能包含小写字母、数字和连字符');
+            this.setFieldError(idField, 'ID只能包含中文、字母、数字和连字符');
             isValid = false;
         }
         
@@ -574,9 +597,9 @@ class AdminManager {
         
         // 特殊验证
         if (field.id === 'emperor-id') {
-            const idPattern = /^[a-z0-9\-]+$/;
+            const idPattern = /^[\u4e00-\u9fa5a-zA-Z0-9\-]+$/;
             if (value && !idPattern.test(value)) {
-                this.setFieldError(field, 'ID只能包含小写字母、数字和连字符');
+                this.setFieldError(field, 'ID只能包含中文、字母、数字和连字符');
                 return false;
             }
             
