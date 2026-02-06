@@ -320,7 +320,11 @@ class UIManager {
                 html += `<p><strong>建议：</strong>${evaluation.suggestions.join('；')}</p>`;
             }
 
-            if (evaluation.corrected) {
+            // 为所有非pass状态的提示词提供修正建议输入框
+            if (evaluation.status !== 'pass') {
+                // 如果AI没有生成修正建议，使用原内容作为默认值
+                const correctedText = evaluation.corrected || hint.content;
+                
                 html += `
                     <div class="suggestion">
                         <strong>修正建议：</strong>
@@ -328,8 +332,9 @@ class UIManager {
                             class="corrected-hint-input" 
                             data-index="${evaluation.index}"
                             rows="3"
+                            placeholder="请输入修正后的提示词..."
                             style="width: 100%; margin-top: 8px; padding: 8px; border: 2px solid #667eea; border-radius: 5px; font-size: 0.95rem;"
-                        >${evaluation.corrected}</textarea>
+                        >${correctedText}</textarea>
                     </div>
                 `;
             }
@@ -348,6 +353,13 @@ class UIManager {
                     evaluation.corrected = e.target.value;
                 }
             });
+            
+            // 初始化时也要设置corrected值
+            const index = parseInt(input.dataset.index);
+            const evaluation = evaluations[index];
+            if (evaluation && !evaluation.corrected) {
+                evaluation.corrected = input.value;
+            }
         });
     }
 
