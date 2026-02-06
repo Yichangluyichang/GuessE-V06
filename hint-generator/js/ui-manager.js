@@ -335,8 +335,20 @@ class UIManager {
                             placeholder="请输入修正后的提示词..."
                             style="width: 100%; margin-top: 8px; padding: 8px; border: 2px solid #667eea; border-radius: 5px; font-size: 0.95rem;"
                         >${correctedText}</textarea>
-                    </div>
                 `;
+                
+                // 为fail状态添加删除按钮
+                if (evaluation.status === 'fail') {
+                    html += `
+                        <button 
+                            class="delete-hint-btn" 
+                            data-index="${evaluation.index}"
+                            style="margin-top: 10px; padding: 8px 20px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem;"
+                        >🗑️ 删除此提示词</button>
+                    `;
+                }
+                
+                html += `</div>`;
             }
 
             itemDiv.innerHTML = html;
@@ -361,6 +373,42 @@ class UIManager {
                 evaluation.corrected = input.value;
             }
         });
+
+        // 绑定删除按钮事件
+        const deleteButtons = container.querySelectorAll('.delete-hint-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                this.deleteHintFromEvaluation(index, evaluations, hints);
+            });
+        });
+    }
+
+    /**
+     * 从评估结果中删除提示词
+     * @param {number} index - 提示词索引
+     * @param {Array} evaluations - 评估结果数组
+     * @param {Array} hints - 提示词数组
+     */
+    deleteHintFromEvaluation(index, evaluations, hints) {
+        if (!confirm(`确定要删除提示词 ${index + 1} 吗？`)) {
+            return;
+        }
+
+        // 从hints数组中删除
+        hints.splice(index, 1);
+
+        // 从evaluations数组中删除
+        evaluations.splice(index, 1);
+
+        // 更新剩余评估的索引
+        evaluations.forEach((evaluation, i) => {
+            evaluation.index = i;
+        });
+
+        // 重新渲染
+        this.displayEvaluationResults(evaluations, hints);
+        this.showMessage('提示词已删除', 'success');
     }
 
     /**
