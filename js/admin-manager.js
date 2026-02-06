@@ -1168,7 +1168,9 @@ class AdminManager {
         
         // 直接填充基本信息
         idField.value = emperor.id;
-        idField.disabled = true; // 编辑时不能修改ID
+        // 允许编辑ID，但添加警告提示
+        idField.disabled = false;
+        idField.title = '警告：修改ID会创建新的皇帝记录，原记录需要手动删除';
         
         nameField.value = emperor.name;
         templeField.value = emperor.templeName;
