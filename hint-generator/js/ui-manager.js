@@ -337,16 +337,15 @@ class UIManager {
                         >${correctedText}</textarea>
                 `;
                 
-                // 为fail状态添加删除按钮
-                if (evaluation.status === 'fail') {
-                    html += `
-                        <button 
-                            class="delete-hint-btn" 
-                            data-index="${evaluation.index}"
-                            style="margin-top: 10px; padding: 8px 20px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem;"
-                        >🗑️ 删除此提示词</button>
-                    `;
-                }
+                // 为warning和fail状态添加删除按钮
+                const buttonColor = evaluation.status === 'fail' ? '#e74c3c' : '#f39c12';
+                html += `
+                    <button 
+                        class="delete-hint-btn" 
+                        data-index="${evaluation.index}"
+                        style="margin-top: 10px; padding: 8px 20px; background: ${buttonColor}; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem;"
+                    >🗑️ 删除此提示词</button>
+                `;
                 
                 html += `</div>`;
             }
