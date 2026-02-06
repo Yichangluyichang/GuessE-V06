@@ -386,6 +386,11 @@ class App {
                 const hint = this.currentEmperor.hints[evaluation.index];
                 if (hint) {
                     hint.content = evaluation.corrected;
+                    // 更新评估状态为通过
+                    evaluation.status = 'pass';
+                    // 清空问题和建议
+                    evaluation.issues = [];
+                    evaluation.suggestions = [];
                 }
             }
         });
