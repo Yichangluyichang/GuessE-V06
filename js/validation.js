@@ -10,45 +10,58 @@
  */
 function validateEmperor(emperor) {
     if (!emperor || typeof emperor !== 'object') {
+        console.error('验证失败: 皇帝对象无效');
         return false;
     }
     
     // 检查必需字段
     if (!emperor.id || typeof emperor.id !== 'string' || emperor.id.trim() === '') {
+        console.error('验证失败: id 字段无效', emperor.id);
         return false;
     }
     
     if (!emperor.name || typeof emperor.name !== 'string' || emperor.name.trim() === '') {
+        console.error('验证失败: name 字段无效', emperor.name);
         return false;
     }
     
     if (!emperor.templeName || typeof emperor.templeName !== 'string' || emperor.templeName.trim() === '') {
+        console.error('验证失败: templeName 字段无效', emperor.templeName);
         return false;
     }
     
     if (!emperor.posthumousName || typeof emperor.posthumousName !== 'string' || emperor.posthumousName.trim() === '') {
+        console.error('验证失败: posthumousName 字段无效', emperor.posthumousName);
         return false;
     }
     
     // 检查年号数组
     if (!Array.isArray(emperor.reignNames) || emperor.reignNames.length === 0) {
+        console.error('验证失败: reignNames 数组无效', emperor.reignNames);
         return false;
     }
     
     for (const reignName of emperor.reignNames) {
         if (!reignName || typeof reignName !== 'string' || reignName.trim() === '') {
+            console.error('验证失败: reignName 无效', reignName);
             return false;
         }
     }
     
     // 检查提示词数组
     if (!Array.isArray(emperor.hints) || emperor.hints.length < 10) {
+        console.error('验证失败: hints 数组无效或数量不足', {
+            isArray: Array.isArray(emperor.hints),
+            length: emperor.hints ? emperor.hints.length : 0
+        });
         return false;
     }
     
     // 验证每个提示词
-    for (const hint of emperor.hints) {
+    for (let i = 0; i < emperor.hints.length; i++) {
+        const hint = emperor.hints[i];
         if (!validateHint(hint)) {
+            console.error(`验证失败: hint ${i} 无效`, hint);
             return false;
         }
     }
@@ -57,14 +70,17 @@ function validateEmperor(emperor) {
     const difficultyCount = countHintsByDifficulty(emperor.hints);
     
     if (difficultyCount.hard < 3) {
+        console.error('验证失败: 困难提示词不足', difficultyCount);
         return false;
     }
     
     if (difficultyCount.medium < 3) {
+        console.error('验证失败: 中等提示词不足', difficultyCount);
         return false;
     }
     
     if (difficultyCount.easy < 4) {
+        console.error('验证失败: 简单提示词不足', difficultyCount);
         return false;
     }
     
@@ -149,15 +165,18 @@ function validateHintDistribution(hints) {
  */
 function validateHint(hint) {
     if (!hint || typeof hint !== 'object') {
+        console.error('验证失败: hint 对象无效', hint);
         return false;
     }
     
     // 检查必需字段
     if (!hint.id || typeof hint.id !== 'string' || hint.id.trim() === '') {
+        console.error('验证失败: hint.id 字段无效', hint);
         return false;
     }
     
     if (!hint.content || typeof hint.content !== 'string' || hint.content.trim() === '') {
+        console.error('验证失败: hint.content 字段无效', hint);
         return false;
     }
     
@@ -169,11 +188,16 @@ function validateHint(hint) {
     ];
     
     if (!validDifficulties.includes(hint.difficulty)) {
+        console.error('验证失败: hint.difficulty 字段无效', {
+            difficulty: hint.difficulty,
+            validDifficulties: validDifficulties
+        });
         return false;
     }
     
     // 检查顺序
     if (typeof hint.order !== 'number' || hint.order < 0) {
+        console.error('验证失败: hint.order 字段无效', hint);
         return false;
     }
     

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>皇帝提示词生成器</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="login-screen" class="screen active">
+        <div class="login-container">
+            <h1>🔒 皇帝提示词生成器</h1>
+            <p>请输入管理员密码</p>
+            <div class="login-form">
+                <input type="password" id="password-input" placeholder="请输入密码" maxlength="50">
+                <button id="login-btn" class="primary-btn">登录</button>
+            </div>
+            <div id="login-error" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- 主应用界面 -->
+    <div id="app-screen" class="screen">
+        <header>
+            <h1>🎯 皇帝提示词生成器</h1>
+            <button id="logout-btn" class="secondary-btn">退出登录</button>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="generate">生成新皇帝</button>
+            <button class="tab-btn" data-tab="add-hints">添加提示词</button>
+            <button class="tab-btn" data-tab="evaluate">评估提示词</button>
+            <button class="tab-btn" data-tab="manage">编辑管理</button>
+        </nav>
+
+        <main id="main-content">
+            <!-- 标签页1：生成新皇帝 -->
+            <div id="tab-generate" class="tab-content active">
+                <h2>生成新皇帝</h2>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="emperor-name">皇帝名称 *</label>
+                        <input type="text" id="emperor-name" placeholder="例如：刘彻" required>
+                    </div>
+                    <div class="form-group">
+                        <label>皇帝难度 *</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="emperor-difficulty" value="easy"> 简单</label>
+                            <label><input type="radio" name="emperor-difficulty" value="medium" checked> 中等</label>
+                            <label><input type="radio" name="emperor-difficulty" value="hard"> 困难</label>
+                        </div>
+                    </div>
+                    <button id="generate-btn" class="primary-btn">🤖 AI 生成</button>
+                </div>
+
+                <div id="generate-result" class="result-section" style="display: none;">
+                    <h3>生成结果</h3>
+                    <div class="emperor-info-edit">
+                        <h4>基本信息</h4>
+                        <div class="form-group">
+                            <label>ID</label>
+                            <input type="text" id="gen-id" placeholder="例如：汉朝_刘彻">
+                        </div>
+                        <div class="form-group">
+                            <label>名字</label>
+                            <input type="text" id="gen-name">
+                        </div>
+                        <div class="form-group">
+                            <label>庙号</label>
+                            <input type="text" id="gen-temple-name">
+                        </div>
+                        <div class="form-group">
+                            <label>谥号</label>
+                            <input type="text" id="gen-posthumous-name">
+                        </div>
+                        <div class="form-group">
+                            <label>年号（用逗号分隔）</label>
+                            <input type="text" id="gen-reign-names">
+                        </div>
+                        <div class="form-group">
+                            <label>朝代</label>
+                            <input type="text" id="gen-dynasty">
+                        </div>
+                        <div class="form-group">
+                            <label>在位开始年份</label>
+                            <input type="number" id="gen-reign-start">
+                        </div>
+                        <div class="form-group">
+                            <label>在位结束年份</label>
+                            <input type="number" id="gen-reign-end">
+                        </div>
+                    </div>
+
+                    <div class="hints-edit">
+                        <h4>提示词列表</h4>
+                        <div id="gen-hints-container"></div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button id="sync-generated-btn" class="primary-btn">☁️ 同步到云端</button>
+                        <button id="clear-generated-btn" class="secondary-btn">清空</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 标签页2：添加提示词 -->
+            <div id="tab-add-hints" class="tab-content">
+                <h2>为已有皇帝添加提示词</h2>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="select-emperor">选择皇帝</label>
+                        <select id="select-emperor">
+                            <option value="">请选择...</option>
+                        </select>
+                    </div>
+                    <button id="load-emperor-btn" class="primary-btn">加载皇帝数据</button>
+                </div>
+
+                <div id="current-hints-section" style="display: none;">
+                    <h3>当前提示词</h3>
+                    <div id="current-hints-display"></div>
+
+                    <h3>添加新提示词</h3>
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label>选择难度</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="add-hint-difficulty" value="easy"> 简单</label>
+                                <label><input type="radio" name="add-hint-difficulty" value="medium" checked> 中等</label>
+                                <label><input type="radio" name="add-hint-difficulty" value="hard"> 困难</label>
+                            </div>
+                        </div>
+                        <button id="generate-hint-btn" class="primary-btn">🤖 AI 生成提示词</button>
+                    </div>
+
+                    <div id="new-hint-result" style="display: none;">
+                        <div class="form-group">
+                            <label>生成的提示词</label>
+                            <textarea id="new-hint-content" rows="3"></textarea>
+                        </div>
+                        <div class="action-buttons">
+                            <button id="add-hint-to-list-btn" class="primary-btn">添加到列表</button>
+                            <button id="regenerate-hint-btn" class="secondary-btn">重新生成</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 标签页3：评估提示词 -->
+            <div id="tab-evaluate" class="tab-content">
+                <h2>评估提示词质量</h2>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="evaluate-emperor">选择皇帝</label>
+                        <select id="evaluate-emperor">
+                            <option value="">请选择...</option>
+                        </select>
+                    </div>
+                    <button id="evaluate-btn" class="primary-btn">🔍 开始评估</button>
+                </div>
+
+                <div id="evaluation-result" style="display: none;">
+                    <h3>评估结果</h3>
+                    <div id="evaluation-display"></div>
+                    <div class="action-buttons">
+                        <button id="apply-fixes-btn" class="primary-btn">应用所有修正</button>
+                        <button id="sync-evaluated-btn" class="primary-btn">同步到云端</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 标签页4：编辑管理 -->
+            <div id="tab-manage" class="tab-content">
+                <h2>编辑管理</h2>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="manage-emperor">选择皇帝</label>
+                        <select id="manage-emperor">
+                            <option value="">请选择...</option>
+                        </select>
+                    </div>
+                    <button id="load-manage-btn" class="primary-btn">加载数据</button>
+                </div>
+
+                <div id="manage-section" style="display: none;">
+                    <h3>编辑提示词</h3>
+                    <div id="manage-hints-container"></div>
+                    <button id="add-manual-hint-btn" class="secondary-btn">+ 手动添加提示词</button>
+                    <div class="action-buttons">
+                        <button id="save-manage-btn" class="primary-btn">保存更改</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 状态提示 -->
+        <div id="status-message" class="status-message"></div>
+
+        <!-- 加载提示 -->
+        <div id="loading-overlay" class="loading-overlay" style="display: none;">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p id="loading-text">处理中...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/firebase-manager.js"></script>
+    <script src="js/gemini-api.js"></script>
+    <script src="js/ui-manager.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

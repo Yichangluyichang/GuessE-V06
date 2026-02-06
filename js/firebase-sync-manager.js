@@ -1,7 +1,10 @@
 /**
  * Firebase 数据同步管理器
  * 负责云端数据的读取、写入和同步
+ * VERSION: 2.0 - Fixed loadEmperorsFromCloud to include id field
  */
+
+console.log('🔥 Firebase Sync Manager VERSION 2.0 loaded');
 
 class FirebaseSyncManager {
     constructor() {
@@ -101,8 +104,12 @@ class FirebaseSyncManager {
                 return [];
             }
 
-            // 转换为数组格式
-            const emperors = Object.values(data);
+            // 转换为数组格式，将 key 作为 id 字段
+            const emperors = Object.keys(data).map(key => ({
+                ...data[key],
+                id: key
+            }));
+            
             console.log(`从云端加载了 ${emperors.length} 个皇帝数据`);
             return emperors;
         } catch (error) {
