@@ -566,12 +566,12 @@ class AdminManager {
             isValid = false;
         }
         
-        // 验证ID格式（允许中文、字母、数字和连字符）
+        // 验证ID格式（允许中文、字母、数字、连字符和下划线）
         const idField = document.getElementById('emperor-id');
-        const idPattern = /^[\u4e00-\u9fa5a-zA-Z0-9\-]+$/;
+        const idPattern = /^[\u4e00-\u9fa5a-zA-Z0-9\-_]+$/;
         if (idField && idField.value && !idPattern.test(idField.value)) {
             console.log('ID格式验证失败:', idField.value);
-            this.setFieldError(idField, 'ID只能包含中文、字母、数字和连字符');
+            this.setFieldError(idField, 'ID只能包含中文、字母、数字、连字符和下划线');
             isValid = false;
         }
         
@@ -597,9 +597,9 @@ class AdminManager {
         
         // 特殊验证
         if (field.id === 'emperor-id') {
-            const idPattern = /^[\u4e00-\u9fa5a-zA-Z0-9\-]+$/;
+            const idPattern = /^[\u4e00-\u9fa5a-zA-Z0-9\-_]+$/;
             if (value && !idPattern.test(value)) {
-                this.setFieldError(field, 'ID只能包含中文、字母、数字和连字符');
+                this.setFieldError(field, 'ID只能包含中文、字母、数字、连字符和下划线');
                 return false;
             }
             
