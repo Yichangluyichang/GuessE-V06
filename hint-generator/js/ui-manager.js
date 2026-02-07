@@ -335,6 +335,19 @@ class UIManager {
                             placeholder="请输入修正后的提示词..."
                             style="width: 100%; margin-top: 8px; padding: 8px; border: 2px solid #667eea; border-radius: 5px; font-size: 0.95rem;"
                         >${correctedText}</textarea>
+                        
+                        <div style="margin-top: 10px;">
+                            <label style="font-weight: bold; margin-right: 10px;">修改难度等级：</label>
+                            <select 
+                                class="difficulty-change-select" 
+                                data-index="${evaluation.index}"
+                                style="padding: 8px 15px; border: 2px solid #667eea; border-radius: 5px; font-size: 0.95rem; cursor: pointer; background: white;"
+                            >
+                                <option value="easy" ${hint.difficulty === 'easy' ? 'selected' : ''}>简单 (Easy)</option>
+                                <option value="medium" ${hint.difficulty === 'medium' ? 'selected' : ''}>中等 (Medium)</option>
+                                <option value="hard" ${hint.difficulty === 'hard' ? 'selected' : ''}>困难 (Hard)</option>
+                            </select>
+                        </div>
                 `;
                 
                 // 为warning和fail状态添加删除按钮
@@ -371,6 +384,21 @@ class UIManager {
             if (evaluation && !evaluation.corrected) {
                 evaluation.corrected = input.value;
             }
+        });
+
+        // 绑定难度修改下拉框的事件
+        const difficultySelects = container.querySelectorAll('.difficulty-change-select');
+        difficultySelects.forEach(select => {
+            select.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                const newDifficulty = e.target.value;
+                
+                // 更新hints数组中的难度
+                if (hints[index]) {
+                    hints[index].difficulty = newDifficulty;
+                    this.showMessage(`提示词 ${index + 1} 的难度已修改为 ${newDifficulty}`, 'success', 2000);
+                }
+            });
         });
 
         // 绑定删除按钮事件

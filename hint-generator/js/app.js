@@ -40,6 +40,9 @@ class App {
             return;
         }
 
+        // 更新模型状态显示
+        this.updateModelStatus();
+
         // 绑定事件
         this.bindEvents();
 
@@ -47,6 +50,25 @@ class App {
         await this.loadEmperorsList();
 
         console.log('应用初始化完成');
+    }
+
+    /**
+     * 更新模型状态显示
+     */
+    updateModelStatus() {
+        const status = this.geminiAPI.getModelStatus();
+        const modelNameEl = document.getElementById('current-model-name');
+        const modelQualityEl = document.getElementById('model-quality');
+        
+        if (modelNameEl) {
+            modelNameEl.textContent = status.name;
+        }
+        
+        if (modelQualityEl) {
+            modelQualityEl.textContent = `(${status.quality})`;
+        }
+        
+        console.log('当前使用模型:', status);
     }
 
     /**
@@ -117,7 +139,6 @@ class App {
             // 填充所有下拉框
             this.uiManager.populateEmperorSelect(emperors, 'select-emperor');
             this.uiManager.populateEmperorSelect(emperors, 'evaluate-emperor');
-            this.uiManager.populateEmperorSelect(emperors, 'manage-emperor');
             
             console.log(`加载了 ${emperors.length} 个皇帝`);
         } catch (error) {
@@ -438,6 +459,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     app = new App();
+    window.app = app; // 暴露到全局，供gemini-api调用
     uiManager = app.uiManager;
     await app.init();
 });

@@ -28,14 +28,19 @@
     <div id="app-screen" class="screen">
         <header>
             <h1>🎯 皇帝提示词生成器</h1>
-            <button id="logout-btn" class="secondary-btn">退出登录</button>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div id="model-status" style="background: #e7f3ff; padding: 8px 15px; border-radius: 8px; font-size: 13px; color: #0c5460;">
+                    <strong>当前模型:</strong> <span id="current-model-name">加载中...</span>
+                    <span style="margin-left: 10px; color: #28a745;" id="model-quality"></span>
+                </div>
+                <button id="logout-btn" class="secondary-btn">退出登录</button>
+            </div>
         </header>
 
         <nav class="tabs">
             <button class="tab-btn active" data-tab="generate">生成新皇帝</button>
             <button class="tab-btn" data-tab="add-hints">添加提示词</button>
             <button class="tab-btn" data-tab="evaluate">评估提示词</button>
-            <button class="tab-btn" data-tab="manage">编辑管理</button>
         </nav>
 
         <main id="main-content">
@@ -170,29 +175,6 @@
                     <div class="action-buttons">
                         <button id="apply-fixes-btn" class="primary-btn">应用所有修正</button>
                         <button id="sync-evaluated-btn" class="primary-btn">同步到云端</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 标签页4：编辑管理 -->
-            <div id="tab-manage" class="tab-content">
-                <h2>编辑管理</h2>
-                <div class="form-section">
-                    <div class="form-group">
-                        <label for="manage-emperor">选择皇帝</label>
-                        <select id="manage-emperor">
-                            <option value="">请选择...</option>
-                        </select>
-                    </div>
-                    <button id="load-manage-btn" class="primary-btn">加载数据</button>
-                </div>
-
-                <div id="manage-section" style="display: none;">
-                    <h3>编辑提示词</h3>
-                    <div id="manage-hints-container"></div>
-                    <button id="add-manual-hint-btn" class="secondary-btn">+ 手动添加提示词</button>
-                    <div class="action-buttons">
-                        <button id="save-manage-btn" class="primary-btn">保存更改</button>
                     </div>
                 </div>
             </div>

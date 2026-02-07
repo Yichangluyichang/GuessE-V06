@@ -87,20 +87,43 @@ class EmperorDatabase {
                 window.game.updateLoadingMessage(`正在验证 ${cloudEmperors.length} 位皇帝数据...`);
             }
             
-            // 验证数据完整性
-            const integrityCheck = window.GameValidation.checkEmperorsIntegrity(cloudEmperors);
+            // 验证每个皇帝，分离有效和无效的
+            const validEmperors = [];
+            const invalidEmperors = [];
             
-            if (!integrityCheck.isValid) {
-                console.error('云端数据完整性检查失败:', integrityCheck.errors);
+            for (const emperor of cloudEmperors) {
+                if (window.GameValidation.validateEmperor(emperor)) {
+                    validEmperors.push(emperor);
+                } else {
+                    // 标记为无效但保留信息用于日志
+                    invalidEmperors.push({
+                        id: emperor.id,
+                        name: emperor.name,
+                        reason: '提示词数量或分布不符合要求'
+                    });
+                    console.warn(`皇帝 ${emperor.name} (${emperor.id}) 验证失败，已跳过`);
+                }
+            }
+            
+            // 记录验证结果
+            console.log(`云端数据验证完成: ${validEmperors.length} 个有效, ${invalidEmperors.length} 个无效`);
+            
+            if (invalidEmperors.length > 0) {
+                console.warn('以下皇帝因数据不完整被跳过:', invalidEmperors);
+            }
+            
+            // 只要有至少一个有效皇帝，就认为加载成功
+            if (validEmperors.length === 0) {
+                console.error('云端没有有效的皇帝数据');
                 return false;
             }
             
-            this.emperors = cloudEmperors;
-            console.log(`从云端加载了 ${this.emperors.length} 位皇帝数据`);
+            this.emperors = validEmperors;
+            console.log(`从云端加载了 ${this.emperors.length} 位有效皇帝数据`);
             
             // 更新加载提示
             if (window.game && window.game.updateLoadingMessage) {
-                window.game.updateLoadingMessage('数据加载完成！');
+                window.game.updateLoadingMessage(`数据加载完成！共 ${this.emperors.length} 位皇帝可用`);
             }
             
             return true;
@@ -130,18 +153,41 @@ class EmperorDatabase {
             }
             
             const parsed = JSON.parse(data);
+            const allEmperors = parsed.emperors || [];
             
-            // 验证数据完整性
-            const integrityCheck = window.GameValidation.checkEmperorsIntegrity(parsed.emperors || []);
+            // 验证每个皇帝，分离有效和无效的
+            const validEmperors = [];
+            const invalidEmperors = [];
             
-            if (!integrityCheck.isValid) {
-                console.error('存储的数据完整性检查失败:', integrityCheck.errors);
-                this.handleDataCorruption('存储的皇帝数据完整性检查失败', parsed);
+            for (const emperor of allEmperors) {
+                if (window.GameValidation.validateEmperor(emperor)) {
+                    validEmperors.push(emperor);
+                } else {
+                    invalidEmperors.push({
+                        id: emperor.id,
+                        name: emperor.name,
+                        reason: '提示词数量或分布不符合要求'
+                    });
+                    console.warn(`皇帝 ${emperor.name} (${emperor.id}) 验证失败，已跳过`);
+                }
+            }
+            
+            // 记录验证结果
+            console.log(`本地数据验证完成: ${validEmperors.length} 个有效, ${invalidEmperors.length} 个无效`);
+            
+            if (invalidEmperors.length > 0) {
+                console.warn('以下皇帝因数据不完整被跳过:', invalidEmperors);
+            }
+            
+            // 只要有至少一个有效皇帝，就认为加载成功
+            if (validEmperors.length === 0) {
+                console.error('localStorage中没有有效的皇帝数据');
+                this.handleDataCorruption('存储的皇帝数据全部无效', parsed);
                 return false;
             }
             
-            this.emperors = parsed.emperors || [];
-            console.log(`从localStorage加载了 ${this.emperors.length} 位皇帝数据`);
+            this.emperors = validEmperors;
+            console.log(`从localStorage加载了 ${this.emperors.length} 位有效皇帝数据`);
             return true;
             
         } catch (error) {
