@@ -282,9 +282,9 @@ class GeminiAPI {
 1. 基本信息：
    - id: 格式为"朝代_名字"，例如"汉朝_刘彻"
    - name: 皇帝名字
-   - templeName: 庙号
-   - posthumousName: 谥号
-   - reignNames: 年号数组
+   - templeName: 庙号（必须包含朝代名，例如"唐太宗"而不是"太宗"。如果该皇帝没有庙号，填写"无庙号"）
+   - posthumousName: 谥号（完整谥号，例如"文皇帝"。如果该皇帝没有谥号，填写"无谥号"）
+   - reignNames: 年号数组（如果没有年号，使用空数组[]）
    - dynasty: 朝代
    - reignStart: 在位开始年份（公元前用负数）
    - reignEnd: 在位结束年份
@@ -314,8 +314,8 @@ class GeminiAPI {
 {
   "id": "朝代_名字",
   "name": "名字",
-  "templeName": "庙号",
-  "posthumousName": "谥号",
+  "templeName": "完整庙号（含朝代名，如'唐太宗'）或'无庙号'",
+  "posthumousName": "完整谥号（如'文皇帝'）或'无谥号'",
   "reignNames": ["年号1", "年号2"],
   "dynasty": "朝代",
   "reignStart": 年份,
