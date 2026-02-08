@@ -265,6 +265,23 @@ class GeminiAPI {
                 return await this.callAPI(prompt, retryCount + 1);
             }
             
+            // 如果是网络错误（Failed to fetch, ERR_NAME_NOT_RESOLVED等），尝试切换模型
+            if ((error.message.includes('Failed to fetch') || 
+                 error.message.includes('NetworkError') || 
+                 error.message.includes('ERR_NAME_NOT_RESOLVED') ||
+                 error.name === 'TypeError') && 
+                retryCount < maxRetries && 
+                this.switchToNextModel()) {
+                console.log(`网络错误，正在尝试下一个模型...`);
+                
+                // 通知UI更新模型状态
+                if (window.app && window.app.updateModelStatus) {
+                    window.app.updateModelStatus();
+                }
+                
+                return await this.callAPI(prompt, retryCount + 1);
+            }
+            
             throw error;
         }
     }
