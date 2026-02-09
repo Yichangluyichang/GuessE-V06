@@ -28,6 +28,7 @@ class AIServiceManager {
             // 添加多个Gemini模型作为备选
             const geminiModels = [
                 { name: 'gemini-2.0-flash-exp', description: 'Gemini 2.0 Flash Experimental' },
+                { name: 'gemini-2.5-flash', description: 'Gemini 2.5 Flash' },
                 { name: 'gemini-1.5-pro', description: 'Gemini 1.5 Pro' },
                 { name: 'gemini-1.5-flash', description: 'Gemini 1.5 Flash' }
             ];
