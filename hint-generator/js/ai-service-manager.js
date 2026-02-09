@@ -129,10 +129,13 @@ class AIServiceManager {
         } catch (error) {
             console.error(`AI服务调用失败 (${service.name}):`, error);
 
-            // 网络错误或配额错误，尝试切换服务
+            // 网络错误、配额错误、余额不足，尝试切换服务
             if ((error.message.includes('Failed to fetch') ||
                  error.message.includes('NetworkError') ||
                  error.message.includes('quota') ||
+                 error.message.includes('配额') ||
+                 error.message.includes('余额不足') ||
+                 error.message.includes('Insufficient Balance') ||
                  error.message.includes('RESOURCE_EXHAUSTED') ||
                  error.name === 'TypeError') &&
                 retryCount < maxRetries &&
@@ -176,8 +179,12 @@ class AIServiceManager {
             const errorText = await response.text();
             console.error(`DeepSeek错误响应:`, errorText);
             
-            if (response.status === 429 || errorText.includes('quota')) {
-                throw new Error('DeepSeek配额已用完');
+            // 402 = 余额不足, 429 = 配额用完，都需要切换服务
+            if (response.status === 402 || 
+                response.status === 429 || 
+                errorText.includes('quota') || 
+                errorText.includes('Insufficient Balance')) {
+                throw new Error('DeepSeek配额已用完或余额不足');
             }
             
             throw new Error(`DeepSeek API请求失败: ${response.status}`);
