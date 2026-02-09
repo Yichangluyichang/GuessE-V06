@@ -14,7 +14,14 @@ const CONFIG = {
     // 管理员密码 - 用于登录工具
     ADMIN_PASSWORD: "your-password-here",
     
-    // Google Gemini API Key - 用于 AI 生成和评估
+    // AI 服务配置 - 按优先级排序
+    // 系统会自动从第一个开始尝试，失败后切换到下一个
+    
+    // DeepSeek API Key - 推荐优先使用（免费额度大，中文好）
+    // 获取地址：https://platform.deepseek.com/
+    DEEPSEEK_API_KEY: "your-deepseek-api-key-here",
+    
+    // Google Gemini API Key - 备用方案
     // 获取地址：https://makersuite.google.com/app/apikey
     GEMINI_API_KEY: "your-gemini-api-key-here",
     

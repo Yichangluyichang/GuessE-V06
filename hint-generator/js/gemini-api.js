@@ -1,91 +1,13 @@
 /**
- * Google Gemini API 封装模块
- * 处理与 Gemini AI 的所有交互
- * 支持多模型自动切换
+ * Google Gemini API 封装模块（已升级为统一AI服务接口）
+ * 支持多个AI服务商：DeepSeek, Gemini等
+ * 自动切换和负载均衡
  */
 
 class GeminiAPI {
     constructor() {
-        this.apiKey = null;
+        this.aiManager = new AIServiceManager();
         this.initialized = false;
-        
-        // 模型列表（按质量优先级排序：最好的先用）
-        // 基于实际测试的可用模型
-        this.models = [
-            {
-                name: 'gemini-3-pro-preview',
-                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent',
-                description: 'Gemini 3 Pro Preview',
-                quality: '最高质量（预览版）',
-                priority: 1
-            },
-            {
-                name: 'gemini-2.5-pro',
-                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent',
-                description: 'Gemini 2.5 Pro',
-                quality: '最高质量（稳定版）',
-                priority: 2
-            },
-            {
-                name: 'gemini-pro-latest',
-                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent',
-                description: 'Gemini Pro Latest',
-                quality: '最新Pro版本',
-                priority: 3
-            },
-            {
-                name: 'gemini-3-flash-preview',
-                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent',
-                description: 'Gemini 3 Flash Preview',
-                quality: '高质量快速（预览版）',
-                priority: 4
-            },
-            {
-                name: 'gemini-2.5-flash',
-                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
-                description: 'Gemini 2.5 Flash',
-                quality: '高质量快速（稳定版）',
-                priority: 5
-            },
-            {
-                name: 'gemini-flash-latest',
-                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
-                description: 'Gemini Flash Latest',
-                quality: '最新Flash版本',
-                priority: 6
-            },
-            {
-                name: 'gemini-2.0-flash',
-                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                description: 'Gemini 2.0 Flash',
-                quality: '标准质量',
-                priority: 7
-            },
-            {
-                name: 'gemini-2.5-flash-lite',
-                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
-                description: 'Gemini 2.5 Flash Lite',
-                quality: '轻量快速',
-                priority: 8
-            },
-            {
-                name: 'gemini-flash-lite-latest',
-                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent',
-                description: 'Gemini Flash Lite Latest',
-                quality: '最新Lite版本',
-                priority: 9
-            },
-            {
-                name: 'gemini-2.0-flash-lite',
-                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
-                description: 'Gemini 2.0 Flash Lite',
-                quality: '轻量级',
-                priority: 10
-            }
-        ];
-        
-        this.currentModelIndex = 0;
-        this.failedModels = new Set(); // 记录失败的模型
     }
 
     /**
@@ -93,197 +15,39 @@ class GeminiAPI {
      * @returns {boolean} 初始化是否成功
      */
     initialize() {
-        if (typeof CONFIG === 'undefined' || !CONFIG.GEMINI_API_KEY) {
-            console.error('Gemini API Key 未找到');
-            return false;
+        this.initialized = this.aiManager.initialize();
+        if (this.initialized) {
+            console.log('AI服务初始化成功');
+            const status = this.aiManager.getStatus();
+            console.log(`当前使用: ${status.currentService}`);
         }
-
-        this.apiKey = CONFIG.GEMINI_API_KEY;
-        this.initialized = true;
-        console.log('Gemini API 初始化成功');
-        console.log(`当前使用模型: ${this.models[this.currentModelIndex].description}`);
-        return true;
+        return this.initialized;
     }
 
     /**
-     * 获取当前模型信息
+     * 获取当前模型信息（兼容旧接口）
      * @returns {Object} 当前模型信息
      */
     getCurrentModel() {
-        return this.models[this.currentModelIndex];
+        const service = this.aiManager.getCurrentService();
+        return {
+            name: service.model,
+            description: service.description,
+            endpoint: service.endpoint
+        };
     }
 
     /**
-     * 切换到下一个可用模型
-     * @returns {boolean} 是否成功切换
-     */
-    switchToNextModel() {
-        // 标记当前模型为失败
-        this.failedModels.add(this.currentModelIndex);
-        
-        // 查找下一个未失败的模型
-        for (let i = 0; i < this.models.length; i++) {
-            const nextIndex = (this.currentModelIndex + 1 + i) % this.models.length;
-            if (!this.failedModels.has(nextIndex)) {
-                this.currentModelIndex = nextIndex;
-                console.log(`切换到模型: ${this.models[this.currentModelIndex].description}`);
-                return true;
-            }
-        }
-        
-        // 所有模型都失败了
-        console.error('所有模型都已失败');
-        return false;
-    }
-
-    /**
-     * 重置失败记录（每天重置一次）
-     */
-    resetFailedModels() {
-        this.failedModels.clear();
-        this.currentModelIndex = 0;
-        console.log('已重置模型失败记录');
-    }
-
-    /**
-     * 列出可用的模型
-     * @returns {Promise<Array>} 可用模型列表
-     */
-    async listModels() {
-        if (!this.initialized) {
-            this.initialize();
-        }
-
-        try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('列出模型失败:', errorText);
-                throw new Error(`API 请求失败: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('可用模型列表:', data);
-            return data.models || [];
-        } catch (error) {
-            console.error('列出模型失败:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 调用 Gemini API（支持自动切换模型）
+     * 调用 AI API（统一接口）
      * @param {string} prompt - 提示词
-     * @param {number} retryCount - 重试次数
      * @returns {Promise<string>} AI 响应
      */
-    async callAPI(prompt, retryCount = 0) {
+    async callAPI(prompt) {
         if (!this.initialized) {
             this.initialize();
         }
 
-        const currentModel = this.getCurrentModel();
-        const maxRetries = this.models.length; // 最多尝试所有模型
-
-        try {
-            console.log(`使用模型: ${currentModel.description}`);
-            
-            const response = await fetch(`${currentModel.endpoint}?key=${this.apiKey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: prompt
-                        }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        maxOutputTokens: 16384,
-                    }
-                })
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error(`模型 ${currentModel.name} 错误响应:`, errorText);
-                
-                // 检查错误类型
-                // 503 = 服务器过载，不应该切换模型，应该让用户稍后重试
-                if (response.status === 503 || errorText.includes('UNAVAILABLE') || errorText.includes('overloaded')) {
-                    throw new Error('AI 服务器当前过载，请稍后再试（建议等待1-2分钟）');
-                }
-                
-                // 429 = 配额用完，可以切换到下一个模型
-                if (response.status === 429 || errorText.includes('quota') || errorText.includes('RESOURCE_EXHAUSTED')) {
-                    console.warn(`模型 ${currentModel.name} 配额已用完`);
-                    
-                    // 尝试切换到下一个模型
-                    if (retryCount < maxRetries && this.switchToNextModel()) {
-                        console.log(`正在尝试下一个模型...`);
-                        
-                        // 通知UI更新模型状态
-                        if (window.app && window.app.updateModelStatus) {
-                            window.app.updateModelStatus();
-                        }
-                        
-                        return await this.callAPI(prompt, retryCount + 1);
-                    } else {
-                        throw new Error('所有模型的配额都已用完，请明天再试');
-                    }
-                }
-                
-                // 其他错误直接抛出
-                throw new Error(`API 请求失败: ${response.status} - ${errorText}`);
-            }
-
-            const data = await response.json();
-            
-            // 提取响应文本
-            if (data.candidates && data.candidates.length > 0) {
-                const content = data.candidates[0].content;
-                if (content && content.parts && content.parts.length > 0) {
-                    return content.parts[0].text;
-                }
-            }
-
-            throw new Error('API 响应格式错误');
-        } catch (error) {
-            console.error(`Gemini API 调用失败 (${currentModel.name}):`, error);
-            
-            // 如果错误信息包含"服务器过载"或"UNAVAILABLE"，直接抛出，不重试
-            if (error.message.includes('过载') || error.message.includes('UNAVAILABLE') || error.message.includes('overloaded')) {
-                throw error;
-            }
-            
-            // 如果是配额错误，尝试切换模型
-            if (error.message.includes('配额') && retryCount < maxRetries && this.switchToNextModel()) {
-                console.log(`正在尝试下一个模型...`);
-                return await this.callAPI(prompt, retryCount + 1);
-            }
-            
-            // 如果是网络错误（Failed to fetch, ERR_NAME_NOT_RESOLVED等），尝试切换模型
-            if ((error.message.includes('Failed to fetch') || 
-                 error.message.includes('NetworkError') || 
-                 error.message.includes('ERR_NAME_NOT_RESOLVED') ||
-                 error.name === 'TypeError') && 
-                retryCount < maxRetries && 
-                this.switchToNextModel()) {
-                console.log(`网络错误，正在尝试下一个模型...`);
-                
-                // 通知UI更新模型状态
-                if (window.app && window.app.updateModelStatus) {
-                    window.app.updateModelStatus();
-                }
-                
-                return await this.callAPI(prompt, retryCount + 1);
-            }
-            
-            throw error;
-        }
+        return await this.aiManager.callAI(prompt);
     }
 
     /**
