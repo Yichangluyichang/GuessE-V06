@@ -29,7 +29,9 @@ class AIServiceManager {
             const geminiModels = [
                 { name: 'gemini-2.0-flash-exp', description: 'Gemini 2.0 Flash Experimental' },
                 { name: 'gemini-1.5-pro-latest', description: 'Gemini 1.5 Pro Latest' },
-                { name: 'gemini-1.5-flash-latest', description: 'Gemini 1.5 Flash Latest' }
+                { name: 'gemini-1.5-flash-latest', description: 'Gemini 1.5 Flash Latest' },
+                { name: 'gemini-1.5-pro', description: 'Gemini 1.5 Pro' },
+                { name: 'gemini-1.5-flash', description: 'Gemini 1.5 Flash' }
             ];
 
             geminiModels.forEach((model, index) => {
@@ -129,8 +131,10 @@ class AIServiceManager {
         } catch (error) {
             console.error(`AI服务调用失败 (${service.name}):`, error);
 
-            // 网络错误、配额错误、余额不足，尝试切换服务
-            if ((error.message.includes('Failed to fetch') ||
+            // 404错误（模型不存在）、网络错误、配额错误、余额不足，尝试切换服务
+            if ((error.message.includes('404') ||
+                 error.message.includes('NOT_FOUND') ||
+                 error.message.includes('Failed to fetch') ||
                  error.message.includes('NetworkError') ||
                  error.message.includes('quota') ||
                  error.message.includes('配额') ||
