@@ -273,42 +273,49 @@ ${hintsText}
                 console.error('问题JSON:', jsonMatch[0]);
                 
                 // 尝试修复常见的JSON问题
-                let fixedJson = jsonMatch[0]
-                    // 移除JSON字符串中的换行符
-                    .replace(/"corrected":\s*"([^"]*)\n([^"]*)"/g, (match, p1, p2) => {
-                        return `"corrected": "${p1} ${p2}"`;
-                    })
-                    // 移除其他字段中的换行符
-                    .replace(/:\s*"([^"]*)\n([^"]*)"/g, (match, p1, p2) => {
-                        return `: "${p1} ${p2}"`;
-                    })
-                    // 修复未闭合的对象（添加缺失的结尾）
-                    .replace(/,\s*$/, '') // 移除末尾的逗号
-                    .trim();
+                let fixedJson = jsonMatch[0];
                 
-                // 检查是否缺少结尾的 }]
-                if (!fixedJson.endsWith(']')) {
-                    // 找到最后一个完整的对象
-                    const lastCompleteObject = fixedJson.lastIndexOf('},');
-                    if (lastCompleteObject > 0) {
-                        // 截取到最后一个完整对象
-                        fixedJson = fixedJson.substring(0, lastCompleteObject + 1) + ']';
+                // 1. 移除JSON字符串中的换行符
+                fixedJson = fixedJson.replace(/"([^"]*)\n([^"]*)"/g, (match, p1, p2) => {
+                    return `"${p1} ${p2}"`;
+                });
+                
+                // 2. 处理被截断的JSON - 找到最后一个完整的对象
+                if (!fixedJson.trim().endsWith(']')) {
+                    console.log('检测到JSON被截断，尝试修复...');
+                    
+                    // 找到最后一个完整的对象（以 }, 或 } 结尾）
+                    const lastCompleteObjectIndex = fixedJson.lastIndexOf('},');
+                    
+                    if (lastCompleteObjectIndex > 0) {
+                        // 截取到最后一个完整对象，并添加结尾
+                        fixedJson = fixedJson.substring(0, lastCompleteObjectIndex + 1) + ']';
+                        console.log('已截取到最后一个完整对象');
                     } else {
-                        // 尝试添加缺失的结尾
-                        if (!fixedJson.endsWith('}')) {
-                            fixedJson += '}';
-                        }
-                        if (!fixedJson.endsWith(']')) {
-                            fixedJson += ']';
+                        // 如果没有找到 },，尝试找最后一个 }
+                        const lastBraceIndex = fixedJson.lastIndexOf('}');
+                        if (lastBraceIndex > 0) {
+                            fixedJson = fixedJson.substring(0, lastBraceIndex + 1) + ']';
+                            console.log('已截取到最后一个闭合括号');
+                        } else {
+                            // 实在找不到，尝试添加缺失的结尾
+                            if (!fixedJson.endsWith('}')) {
+                                fixedJson += '"}]}';
+                            } else if (!fixedJson.endsWith(']')) {
+                                fixedJson += ']';
+                            }
                         }
                     }
                 }
+                
+                // 3. 移除末尾多余的逗号
+                fixedJson = fixedJson.replace(/,\s*]/, ']');
                 
                 console.log('尝试修复后的JSON:', fixedJson);
                 
                 try {
                     evaluations = JSON.parse(fixedJson);
-                    console.log('JSON修复成功！');
+                    console.log(`JSON修复成功！成功解析 ${evaluations.length} 个评估结果`);
                 } catch (secondError) {
                     console.error('修复后仍然无法解析:', secondError);
                     // 如果还是失败，返回一个友好的错误提示
