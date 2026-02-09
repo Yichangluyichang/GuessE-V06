@@ -23,31 +23,33 @@ class AIServiceManager {
         }
 
         // 按优先级添加AI服务
-        // 1. Gemini（优先，稳定可靠）
+        // 1. Gemini 3.0 Flash（首选）
         if (CONFIG.GEMINI_API_KEY && CONFIG.GEMINI_API_KEY !== 'your-gemini-api-key-here') {
-            // 添加多个Gemini模型作为备选
-            const geminiModels = [
-                { name: 'gemini-2.0-flash-exp', description: 'Gemini 2.0 Flash Experimental' },
-                { name: 'gemini-1.5-pro-latest', description: 'Gemini 1.5 Pro Latest' },
-                { name: 'gemini-1.5-flash-latest', description: 'Gemini 1.5 Flash Latest' },
-                { name: 'gemini-1.5-pro', description: 'Gemini 1.5 Pro' },
-                { name: 'gemini-1.5-flash', description: 'Gemini 1.5 Flash' }
-            ];
-
-            geminiModels.forEach((model, index) => {
-                this.services.push({
-                    name: `Gemini (${model.name})`,
-                    type: 'gemini',
-                    apiKey: CONFIG.GEMINI_API_KEY,
-                    endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${model.name}:generateContent`,
-                    model: model.name,
-                    priority: 1 + index,
-                    description: model.description
-                });
+            this.services.push({
+                name: 'Gemini (gemini-3-flash)',
+                type: 'gemini',
+                apiKey: CONFIG.GEMINI_API_KEY,
+                endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent`,
+                model: 'gemini-3-flash',
+                priority: 1,
+                description: 'Gemini 3.0 Flash'
             });
         }
 
-        // 2. DeepSeek（备用，中文优化）
+        // 2. Gemini 2.5 Flash（备选）
+        if (CONFIG.GEMINI_API_KEY && CONFIG.GEMINI_API_KEY !== 'your-gemini-api-key-here') {
+            this.services.push({
+                name: 'Gemini (gemini-2.5-flash)',
+                type: 'gemini',
+                apiKey: CONFIG.GEMINI_API_KEY,
+                endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
+                model: 'gemini-2.5-flash',
+                priority: 2,
+                description: 'Gemini 2.5 Flash'
+            });
+        }
+
+        // 3. DeepSeek（最后备用，中文优化）
         if (CONFIG.DEEPSEEK_API_KEY && CONFIG.DEEPSEEK_API_KEY !== 'your-deepseek-api-key-here') {
             this.services.push({
                 name: 'DeepSeek',
@@ -55,8 +57,8 @@ class AIServiceManager {
                 apiKey: CONFIG.DEEPSEEK_API_KEY,
                 endpoint: 'https://api.deepseek.com/v1/chat/completions',
                 model: 'deepseek-chat',
-                priority: 10,
-                description: 'DeepSeek V3（中文优化，备用）'
+                priority: 3,
+                description: 'DeepSeek V3（中文优化）'
             });
         }
 
