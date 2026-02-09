@@ -320,12 +320,23 @@ ${hintsText}
      * @returns {Object} 模型状态信息
      */
     getModelStatus() {
-        const currentModel = this.getCurrentModel();
+        if (!this.initialized) {
+            return {
+                name: '未初始化',
+                quality: '',
+                priority: 0,
+                failedModels: []
+            };
+        }
+        
+        const status = this.aiManager.getStatus();
+        const currentService = this.aiManager.getCurrentService();
+        
         return {
-            name: currentModel.description,
-            quality: currentModel.quality,
-            priority: currentModel.priority,
-            failedModels: Array.from(this.failedModels).map(index => this.models[index].description)
+            name: status.currentService,
+            quality: currentService.description,
+            priority: currentService.priority,
+            failedModels: status.failedServices
         };
     }
 
@@ -334,10 +345,17 @@ ${hintsText}
      * @returns {Array} 模型列表
      */
     getAllModels() {
-        return this.models.map((model, index) => ({
-            ...model,
-            isCurrent: index === this.currentModelIndex,
-            isFailed: this.failedModels.has(index)
+        if (!this.initialized) {
+            return [];
+        }
+        
+        return this.aiManager.services.map((service, index) => ({
+            name: service.name,
+            description: service.description,
+            type: service.type,
+            priority: service.priority,
+            isCurrent: index === this.aiManager.currentServiceIndex,
+            isFailed: this.aiManager.failedServices.has(index)
         }));
     }
 }
