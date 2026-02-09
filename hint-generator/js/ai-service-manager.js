@@ -23,16 +23,16 @@ class AIServiceManager {
         }
 
         // 按优先级添加AI服务
-        // 1. Gemini 3.0 Flash（首选）
+        // 1. Gemini 3.0 Flash Preview（首选）
         if (CONFIG.GEMINI_API_KEY && CONFIG.GEMINI_API_KEY !== 'your-gemini-api-key-here') {
             this.services.push({
-                name: 'Gemini (gemini-3-flash)',
+                name: 'Gemini (gemini-3-flash-preview)',
                 type: 'gemini',
                 apiKey: CONFIG.GEMINI_API_KEY,
-                endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent`,
-                model: 'gemini-3-flash',
+                endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent`,
+                model: 'gemini-3-flash-preview',
                 priority: 1,
-                description: 'Gemini 3.0 Flash'
+                description: 'Gemini 3.0 Flash Preview'
             });
         }
 
