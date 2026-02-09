@@ -685,7 +685,7 @@ function createDefaultEmperorsData() {
         '前秦世祖',
         '秦宣昭帝',
         ['皇始，永兴，甘露，建元'],
-        '南北朝',
+        '五胡十六国',
         357,
         385,
         [

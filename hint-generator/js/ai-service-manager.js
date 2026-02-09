@@ -23,20 +23,7 @@ class AIServiceManager {
         }
 
         // 按优先级添加AI服务
-        // 1. DeepSeek（优先，免费额度大，中文好）
-        if (CONFIG.DEEPSEEK_API_KEY && CONFIG.DEEPSEEK_API_KEY !== 'your-deepseek-api-key-here') {
-            this.services.push({
-                name: 'DeepSeek',
-                type: 'deepseek',
-                apiKey: CONFIG.DEEPSEEK_API_KEY,
-                endpoint: 'https://api.deepseek.com/v1/chat/completions',
-                model: 'deepseek-chat',
-                priority: 1,
-                description: 'DeepSeek V3（中文优化，免费额度大）'
-            });
-        }
-
-        // 2. Gemini（备用）
+        // 1. Gemini（优先，稳定可靠）
         if (CONFIG.GEMINI_API_KEY && CONFIG.GEMINI_API_KEY !== 'your-gemini-api-key-here') {
             // 添加多个Gemini模型作为备选
             const geminiModels = [
@@ -52,9 +39,22 @@ class AIServiceManager {
                     apiKey: CONFIG.GEMINI_API_KEY,
                     endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${model.name}:generateContent`,
                     model: model.name,
-                    priority: 2 + index,
+                    priority: 1 + index,
                     description: model.description
                 });
+            });
+        }
+
+        // 2. DeepSeek（备用，中文优化）
+        if (CONFIG.DEEPSEEK_API_KEY && CONFIG.DEEPSEEK_API_KEY !== 'your-deepseek-api-key-here') {
+            this.services.push({
+                name: 'DeepSeek',
+                type: 'deepseek',
+                apiKey: CONFIG.DEEPSEEK_API_KEY,
+                endpoint: 'https://api.deepseek.com/v1/chat/completions',
+                model: 'deepseek-chat',
+                priority: 10,
+                description: 'DeepSeek V3（中文优化，备用）'
             });
         }
 
@@ -171,7 +171,7 @@ class AIServiceManager {
                     }
                 ],
                 temperature: 0.7,
-                max_tokens: 16384
+                max_tokens: 8192  // DeepSeek最大支持8192
             })
         });
 
