@@ -350,7 +350,8 @@ const EmperorDictionary = {
             { name: '溥仪', dynasty: '清朝' },
 
             // 其他
-            { name: '王莽', dynasty: '其他' }
+            { name: '王莽', dynasty: '其他' },
+            { name: '武则天', dynasty: '其他' }
         ];
     },
 
