@@ -232,20 +232,24 @@ ${hintsText}
 - "他的谥号体现了文治武功" ✅（没有说出具体谥号）
 - "他开创了使用年号的先例" ✅（没有说出具体年号）
 
-请对每条提示词进行评估，返回 JSON 数组格式。
-注意：JSON中的字符串不能包含换行符，请使用空格代替。
+⚠️ 重要格式要求：
+1. 必须返回完整的JSON数组，包含所有${hints.length}个提示词的评估
+2. JSON中的字符串不能包含换行符，请使用空格代替
+3. corrected字段必须是完整的句子，不能被截断
+4. 如果内容太长，可以简化suggestions和issues，但必须保证JSON完整
 
+返回格式：
 [
   {
     "index": 提示词序号（从0开始）,
     "status": "pass/warning/fail",
-    "issues": ["问题描述1", "问题描述2"],
-    "suggestions": ["建议1", "建议2"],
+    "issues": ["问题描述1"],
+    "suggestions": ["建议1"],
     "corrected": "修正后的提示词（如果需要）"
   }
 ]
 
-只返回 JSON 数组，不要包含其他文字。`;
+只返回完整的JSON数组，不要包含其他文字。确保JSON格式正确且完整。`;
 
         try {
             const response = await this.callAPI(prompt);
@@ -275,35 +279,46 @@ ${hintsText}
                 // 尝试修复常见的JSON问题
                 let fixedJson = jsonMatch[0];
                 
-                // 1. 移除JSON字符串中的换行符
-                fixedJson = fixedJson.replace(/"([^"]*)\n([^"]*)"/g, (match, p1, p2) => {
-                    return `"${p1} ${p2}"`;
-                });
+                // 1. 移除JSON字符串中的所有换行符（包括\n和实际换行）
+                fixedJson = fixedJson.replace(/\n/g, ' ');
+                fixedJson = fixedJson.replace(/\r/g, '');
                 
                 // 2. 处理被截断的JSON - 找到最后一个完整的对象
                 if (!fixedJson.trim().endsWith(']')) {
                     console.log('检测到JSON被截断，尝试修复...');
                     
-                    // 找到最后一个完整的对象（以 }, 或 } 结尾）
-                    const lastCompleteObjectIndex = fixedJson.lastIndexOf('},');
+                    // 找到最后一个完整的 "corrected": "..." 字段
+                    // 策略：找到最后一个 "}," 或最后一个 "}"（如果是数组最后一个元素）
                     
-                    if (lastCompleteObjectIndex > 0) {
+                    // 先尝试找最后一个 "},"（表示还有下一个对象）
+                    let lastCompleteIndex = fixedJson.lastIndexOf('},');
+                    
+                    if (lastCompleteIndex > 0) {
                         // 截取到最后一个完整对象，并添加结尾
-                        fixedJson = fixedJson.substring(0, lastCompleteObjectIndex + 1) + ']';
-                        console.log('已截取到最后一个完整对象');
+                        fixedJson = fixedJson.substring(0, lastCompleteIndex + 1) + ']';
+                        console.log('已截取到最后一个完整对象（使用 }, 分隔符）');
                     } else {
-                        // 如果没有找到 },，尝试找最后一个 }
-                        const lastBraceIndex = fixedJson.lastIndexOf('}');
-                        if (lastBraceIndex > 0) {
-                            fixedJson = fixedJson.substring(0, lastBraceIndex + 1) + ']';
-                            console.log('已截取到最后一个闭合括号');
-                        } else {
-                            // 实在找不到，尝试添加缺失的结尾
-                            if (!fixedJson.endsWith('}')) {
-                                fixedJson += '"}]}';
-                            } else if (!fixedJson.endsWith(']')) {
-                                fixedJson += ']';
+                        // 如果没有 },，说明可能是数组的最后一个元素被截断
+                        // 找到倒数第二个 }（倒数第一个可能是不完整的）
+                        const allBraces = [];
+                        for (let i = 0; i < fixedJson.length; i++) {
+                            if (fixedJson[i] === '}') {
+                                allBraces.push(i);
                             }
+                        }
+                        
+                        if (allBraces.length >= 2) {
+                            // 使用倒数第二个 }
+                            const secondLastBrace = allBraces[allBraces.length - 2];
+                            fixedJson = fixedJson.substring(0, secondLastBrace + 1) + ']';
+                            console.log('已截取到倒数第二个完整对象');
+                        } else if (allBraces.length === 1) {
+                            // 只有一个 }，使用它
+                            fixedJson = fixedJson.substring(0, allBraces[0] + 1) + ']';
+                            console.log('已截取到唯一的完整对象');
+                        } else {
+                            console.error('无法找到任何完整的对象');
+                            throw new Error('JSON格式严重损坏，无法修复');
                         }
                     }
                 }
@@ -315,7 +330,12 @@ ${hintsText}
                 
                 try {
                     evaluations = JSON.parse(fixedJson);
-                    console.log(`JSON修复成功！成功解析 ${evaluations.length} 个评估结果`);
+                    console.log(`✅ JSON修复成功！成功解析 ${evaluations.length} 个评估结果（原始有 ${hints.length} 个提示词）`);
+                    
+                    // 如果修复后的结果少于原始提示词数量，给出警告
+                    if (evaluations.length < hints.length) {
+                        console.warn(`⚠️ 注意：由于AI响应被截断，只成功评估了 ${evaluations.length}/${hints.length} 个提示词`);
+                    }
                 } catch (secondError) {
                     console.error('修复后仍然无法解析:', secondError);
                     // 如果还是失败，返回一个友好的错误提示
