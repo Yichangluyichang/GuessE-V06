@@ -349,23 +349,6 @@ class App {
             this.uiManager.hideLoading();
         }
     }
-            this.uiManager.displayCurrentHints(this.currentEmperor.hints);
-
-            // 清空输入
-            textarea.value = '';
-            const resultDiv = document.getElementById('new-hint-result');
-            if (resultDiv) {
-                resultDiv.style.display = 'none';
-            }
-
-            this.uiManager.showMessage('添加成功！', 'success');
-        } catch (error) {
-            console.error('添加提示词失败:', error);
-            this.uiManager.showMessage('添加失败: ' + error.message, 'error');
-        } finally {
-            this.uiManager.hideLoading();
-        }
-    }
 
     /**
      * 处理评估提示词
