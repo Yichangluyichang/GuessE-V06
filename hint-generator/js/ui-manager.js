@@ -286,6 +286,46 @@ class UIManager {
     }
 
     /**
+     * 显示批量生成的提示词（带复选框）
+     * @param {Array<string>} hints - 生成的提示词数组
+     * @param {string} difficulty - 难度等级
+     */
+    displayGeneratedHints(hints, difficulty) {
+        const container = document.getElementById('new-hint-result');
+        if (!container) return;
+
+        container.innerHTML = `
+            <h4>生成的提示词（请勾选要添加的）</h4>
+            <div class="generated-hints-list">
+                ${hints.map((hint, index) => `
+                    <div class="generated-hint-item">
+                        <label class="hint-checkbox-label">
+                            <input type="checkbox" class="hint-checkbox" data-content="${hint.replace(/"/g, '&quot;')}" checked>
+                            <span class="hint-text">${index + 1}. ${hint}</span>
+                        </label>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="action-buttons">
+                <button id="add-hint-to-list-btn" class="primary-btn">添加选中的提示词</button>
+                <button id="regenerate-hint-btn" class="secondary-btn">重新生成</button>
+            </div>
+        `;
+
+        // 重新绑定按钮事件（因为innerHTML会清除原有事件）
+        const addBtn = container.querySelector('#add-hint-to-list-btn');
+        const regenerateBtn = container.querySelector('#regenerate-hint-btn');
+        
+        if (addBtn && window.app) {
+            addBtn.addEventListener('click', () => window.app.handleAddHintToList());
+        }
+        
+        if (regenerateBtn && window.app) {
+            regenerateBtn.addEventListener('click', () => window.app.handleGenerateHint());
+        }
+    }
+
+    /**
      * 显示评估结果
      * @param {Array} evaluations - 评估结果数组
      * @param {Array} hints - 原始提示词数组

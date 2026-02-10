@@ -256,7 +256,7 @@ class App {
     }
 
     /**
-     * 处理生成新提示词
+     * 处理生成新提示词（批量生成5个）
      */
     async handleGenerateHint() {
         if (!this.currentEmperor) {
@@ -267,27 +267,32 @@ class App {
         const difficultyInput = document.querySelector('input[name="add-hint-difficulty"]:checked');
         const difficulty = difficultyInput ? difficultyInput.value : 'medium';
 
-        this.uiManager.showLoading('AI 正在生成提示词...');
+        this.uiManager.showLoading('AI 正在生成5个提示词...');
 
         try {
-            const newHint = await this.geminiAPI.generateHint(
+            const newHints = await this.geminiAPI.generateMultipleHints(
                 this.currentEmperor.name,
                 this.currentEmperor.hints || [],
-                difficulty
+                difficulty,
+                5
             );
 
-            // 显示生成的提示词
-            const textarea = document.getElementById('new-hint-content');
-            if (textarea) {
-                textarea.value = newHint;
-            }
+            // 显示生成的提示词列表（带复选框）
+            this.uiManager.displayGeneratedHints(newHints, difficulty);
 
             const resultDiv = document.getElementById('new-hint-result');
             if (resultDiv) {
                 resultDiv.style.display = 'block';
             }
 
-            this.uiManager.showMessage('生成成功！', 'success');
+            this.uiManager.showMessage('生成成功！请勾选要添加的提示词', 'success');
+        } catch (error) {
+            console.error('生成提示词失败:', error);
+            this.uiManager.showMessage('生成失败: ' + error.message, 'error');
+        } finally {
+            this.uiManager.hideLoading();
+        }
+    }
         } catch (error) {
             console.error('生成提示词失败:', error);
             this.uiManager.showMessage('生成失败: ' + error.message, 'error');
@@ -297,7 +302,7 @@ class App {
     }
 
     /**
-     * 处理添加提示词到列表
+     * 处理添加提示词到列表（支持批量添加选中的提示词）
      */
     async handleAddHintToList() {
         if (!this.currentEmperor) {
@@ -305,34 +310,52 @@ class App {
             return;
         }
 
-        const textarea = document.getElementById('new-hint-content');
-        const content = textarea.value.trim();
-
-        if (!content) {
-            this.uiManager.showMessage('请输入提示词内容', 'error');
+        // 获取所有选中的复选框
+        const checkboxes = document.querySelectorAll('.hint-checkbox:checked');
+        
+        if (checkboxes.length === 0) {
+            this.uiManager.showMessage('请至少选择一个提示词', 'error');
             return;
         }
 
         const difficultyInput = document.querySelector('input[name="add-hint-difficulty"]:checked');
         const difficulty = difficultyInput ? difficultyInput.value : 'medium';
 
-        this.uiManager.showLoading('正在添加提示词...');
+        this.uiManager.showLoading(`正在添加 ${checkboxes.length} 个提示词...`);
 
         try {
-            // 添加到当前皇帝的提示词列表
-            const newHint = {
-                id: `${this.currentEmperor.id}-hint-${this.currentEmperor.hints.length}`,
-                content: content,
-                difficulty: difficulty,
-                order: this.currentEmperor.hints.length
-            };
-
-            this.currentEmperor.hints.push(newHint);
+            // 批量添加选中的提示词
+            checkboxes.forEach(checkbox => {
+                const content = checkbox.dataset.content;
+                const newHint = {
+                    id: `${this.currentEmperor.id}-hint-${this.currentEmperor.hints.length}`,
+                    content: content,
+                    difficulty: difficulty,
+                    order: this.currentEmperor.hints.length
+                };
+                this.currentEmperor.hints.push(newHint);
+            });
 
             // 更新到云端
             await this.firebaseManager.updateHints(this.currentEmperor.id, this.currentEmperor.hints);
 
             // 刷新显示
+            this.uiManager.displayCurrentHints(this.currentEmperor.hints);
+
+            // 清空生成结果
+            const resultDiv = document.getElementById('new-hint-result');
+            if (resultDiv) {
+                resultDiv.style.display = 'none';
+            }
+
+            this.uiManager.showMessage(`成功添加 ${checkboxes.length} 个提示词！`, 'success');
+        } catch (error) {
+            console.error('添加提示词失败:', error);
+            this.uiManager.showMessage('添加失败: ' + error.message, 'error');
+        } finally {
+            this.uiManager.hideLoading();
+        }
+    }
             this.uiManager.displayCurrentHints(this.currentEmperor.hints);
 
             // 清空输入

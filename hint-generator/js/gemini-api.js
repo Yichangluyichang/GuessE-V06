@@ -198,6 +198,80 @@ ${hintsText}
     }
 
     /**
+     * 为已有皇帝批量生成多个提示词
+     * @param {string} emperorName - 皇帝名称
+     * @param {Array} existingHints - 现有提示词
+     * @param {string} difficulty - 难度等级
+     * @param {number} count - 生成数量（默认5个）
+     * @returns {Promise<Array<string>>} 生成的提示词数组
+     */
+    async generateMultipleHints(emperorName, existingHints, difficulty, count = 5) {
+        const hintsText = existingHints.map((h, i) => `${i + 1}. ${h.content}`).join('\n');
+        
+        const difficultyDesc = {
+            'easy': '简单难度：广为人知的事件，该皇帝最著名的特征',
+            'medium': '中等难度：较生僻但准确的知识点，所指皇帝极少或唯一',
+            'hard': '困难难度：具有迷惑性（多个皇帝符合）、宽泛描述、或关于身边的人'
+        };
+
+        const prompt = `你是一个中国历史专家。请为皇帝"${emperorName}"生成${count}条新的【${difficulty}】难度提示词。
+
+现有提示词：
+${hintsText}
+
+要求：
+1. 生成${count}条不同的提示词
+2. 不能与现有提示词重复
+3. 不能描述相同的历史事件
+4. 每条提示词都要符合${difficultyDesc[difficulty]}的标准
+
+⚠️ 重要规则：
+- 如果是简单或中等难度：【禁止】提及该皇帝本人的名字、庙号、年号、谥号，但【可以】提及其他人的
+- 如果是困难难度：【禁止】提及任何人的具体名字、庙号、年号、谥号
+- 可以描述特征，但不能直接说出该皇帝本人的名字
+
+请严格按照以下JSON格式返回，不要包含任何其他文字：
+[
+  "提示词1",
+  "提示词2",
+  "提示词3",
+  "提示词4",
+  "提示词5"
+]
+
+只返回JSON数组，不要包含其他文字。`;
+
+        try {
+            const response = await this.callAPI(prompt);
+            
+            console.log('AI 批量生成提示词原始响应:', response);
+            
+            // 提取 JSON - 移除markdown代码块
+            let jsonText = response.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+            
+            // 提取 JSON 数组
+            const jsonMatch = jsonText.match(/\[[\s\S]*\]/);
+            if (!jsonMatch) {
+                console.error('无法在响应中找到 JSON 数组');
+                throw new Error('无法解析AI响应：未找到JSON数组');
+            }
+
+            console.log('提取的 JSON 文本:', jsonMatch[0]);
+            
+            const hints = JSON.parse(jsonMatch[0]);
+            
+            if (!Array.isArray(hints) || hints.length === 0) {
+                throw new Error('生成的提示词格式错误');
+            }
+            
+            return hints.map(h => h.trim());
+        } catch (error) {
+            console.error('批量生成提示词失败:', error);
+            throw error;
+        }
+    }
+
+    /**
      * 评估提示词质量
      * @param {string} emperorName - 皇帝名称
      * @param {Array} hints - 提示词数组
