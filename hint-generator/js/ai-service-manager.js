@@ -94,12 +94,26 @@ class AIServiceManager {
             if (!this.failedServices.has(nextIndex)) {
                 this.currentServiceIndex = nextIndex;
                 console.log(`切换到服务: ${this.services[this.currentServiceIndex].description}`);
+                
+                // 通知UI更新模型状态
+                this.notifyModelChange();
+                
                 return true;
             }
         }
 
         console.error('所有AI服务都已失败');
         return false;
+    }
+
+    /**
+     * 通知UI模型已切换
+     */
+    notifyModelChange() {
+        // 如果全局app对象存在，更新UI
+        if (typeof window !== 'undefined' && window.app && window.app.updateModelStatus) {
+            window.app.updateModelStatus();
+        }
     }
 
     /**
