@@ -293,13 +293,6 @@ class App {
             this.uiManager.hideLoading();
         }
     }
-        } catch (error) {
-            console.error('生成提示词失败:', error);
-            this.uiManager.showMessage('生成失败: ' + error.message, 'error');
-        } finally {
-            this.uiManager.hideLoading();
-        }
-    }
 
     /**
      * 处理添加提示词到列表（支持批量添加选中的提示词）
