@@ -306,6 +306,7 @@ const EmperorDictionary = {
 
             // 元朝
             { name: '成吉思汗', dynasty: '元朝' },
+            { name: '窝阔台', dynasty: '元朝' },
             { name: '忽必烈', dynasty: '元朝' },
             { name: '铁穆耳', dynasty: '元朝' },
             { name: '海山', dynasty: '元朝' },
